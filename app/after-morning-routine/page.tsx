@@ -24,6 +24,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 
 import {
+  ensureSurveySession,
   getAboutYouAnswers,
   getAfterMorningRoutineServerSnapshot,
   getAfterMorningRoutineSnapshot,
@@ -520,8 +521,11 @@ export default function AfterMorningRoutinePage() {
 
     // Best-effort: a Supabase outage or missing env vars must never stop
     // the respondent from reaching their (already locally-saved) result.
+    const { respondentId, startedAt } = ensureSurveySession()
     void submitSurveyResponse({
       surveyVersion: ARCHETYPE_ENGINE_VERSION,
+      respondentId,
+      startedAt,
       aboutYou: getAboutYouAnswers(),
       usualRoutine: usualRoutineValues,
       afterMorningRoutine: values,

@@ -8,6 +8,7 @@ import { SurveyLayout } from "@/components/survey/survey-layout"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { ensureSurveySession } from "@/lib/survey-state"
 
 export default function ConsentPage() {
   const router = useRouter()
@@ -21,7 +22,10 @@ export default function ConsentPage() {
             type="button"
             className="h-11 w-full text-base"
             disabled={!consented}
-            onClick={() => router.push("/about-you")}
+            onClick={() => {
+              ensureSurveySession()
+              router.push("/about-you")
+            }}
           >
             Continue
           </Button>

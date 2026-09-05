@@ -22,6 +22,8 @@ import type {
 
 interface SubmitSurveyResponseInput {
   surveyVersion: number
+  respondentId: string
+  startedAt: string
   aboutYou: AboutYouAnswers
   usualRoutine: UsualRoutineAnswers
   afterMorningRoutine: AfterMorningRoutineAnswers
@@ -30,6 +32,8 @@ interface SubmitSurveyResponseInput {
 
 export async function submitSurveyResponse({
   surveyVersion,
+  respondentId,
+  startedAt,
   aboutYou,
   usualRoutine,
   afterMorningRoutine,
@@ -38,19 +42,24 @@ export async function submitSurveyResponse({
   try {
     const supabase = createClient()
 
-    // Generated client-side rather than read back via `.select()`: the
-    // anon RLS policy is deliberately insert-only (see the migration),
-    // and Postgres filters an INSERT's RETURNING through the table's
-    // SELECT policies — so reading the id back would itself get blocked
-    // by RLS, even though the insert's own WITH CHECK passes. Since we
-    // generate the id ourselves, there's nothing to read back at all.
-    const responseId = crypto.randomUUID()
+    // `respondentId` comes from `ensureSurveySession` (assigned the moment
+    // the respondent accepted consent, well before this insert), not
+    // generated fresh here — that's what lets it double as this row's
+    // unique respondent id AND lets `started_at` below reflect when they
+    // actually began, not when they submitted.
+    //
+    // Reading it back via `.select()` would be blocked anyway: the anon
+    // RLS policy is insert-only (see the migration), and Postgres filters
+    // an INSERT's RETURNING through the table's SELECT policies. Since we
+    // already have the id client-side, there's nothing to read back.
+    const responseId = respondentId || crypto.randomUUID()
 
     const { error: responseError } = await supabase
       .from("survey_responses")
       .insert({
         id: responseId,
         survey_version: surveyVersion,
+        ...(startedAt ? { started_at: startedAt } : null),
         about_you: aboutYou,
         usual_routine: usualRoutine,
         after_morning_routine: afterMorningRoutine,

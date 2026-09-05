@@ -115,6 +115,14 @@ export interface SurveyState {
   // Morning Routine page's Continue handler) — never recomputed by the
   // result page. Null until that submission happens.
   archetypeResult: PersistedArchetypeResult | null
+  // Assigned once, when the respondent accepts consent (see
+  // `ensureSurveySession`) — reused as `survey_responses.id` at
+  // submission, so it doubles as that row's unique respondent ID.
+  respondentId: string
+  // ISO timestamp for the same moment, used to compute how long the
+  // respondent took to fill the survey (`created_at - started_at` in the
+  // database, see the `20260905010000_add_response_timing` migration).
+  startedAt: string
 }
 
 export const defaultAboutYouAnswers: AboutYouAnswers = {
@@ -315,6 +323,8 @@ const defaultSurveyState: SurveyState = {
   usualRoutine: defaultUsualRoutineAnswers,
   afterMorningRoutine: defaultAfterMorningRoutineAnswers,
   archetypeResult: null,
+  respondentId: "",
+  startedAt: "",
 }
 
 const STORAGE_KEY = "breakfast-paradox:survey-state"
@@ -358,6 +368,26 @@ function writeSurveyState(state: SurveyState) {
     // sessionStorage may be unavailable (e.g. private browsing) — the
     // survey still works within the current render, it just won't persist.
   }
+}
+
+// Called once from the consent page's Continue handler, and again
+// (idempotently) right before submission — so a respondent who somehow
+// reaches submission without having gone through consent (e.g. a reload
+// deep in the flow) still gets a valid id/timestamp pair rather than
+// submitting one built from empty strings.
+export function ensureSurveySession(): {
+  respondentId: string
+  startedAt: string
+} {
+  const state = readSurveyState()
+  if (state.respondentId && state.startedAt) {
+    return { respondentId: state.respondentId, startedAt: state.startedAt }
+  }
+
+  const respondentId = state.respondentId || crypto.randomUUID()
+  const startedAt = state.startedAt || new Date().toISOString()
+  writeSurveyState({ ...state, respondentId, startedAt })
+  return { respondentId, startedAt }
 }
 
 export function getAboutYouAnswers(): AboutYouAnswers {
