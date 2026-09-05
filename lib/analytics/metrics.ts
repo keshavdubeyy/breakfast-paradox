@@ -11,15 +11,15 @@ import {
   DURATION_HISTOGRAM_BUCKETS,
   SHORT_COMPLETION_THRESHOLD_SECONDS,
 } from "./constants"
+import {
+  buildOrderedDistribution,
+  percentageOf,
+  UNKNOWN_VALUE,
+  type DistributionBucket,
+} from "./distributions"
 import type { AnalyticsRow, Branch } from "./types"
 
-export interface DistributionBucket {
-  value: string
-  label: string
-  count: number
-  /** 0-100, rounded to one decimal. 0 when `total` is 0. */
-  percentage: number
-}
+export type { DistributionBucket } from "./distributions"
 
 export interface OverviewMetrics {
   completedResponses: number
@@ -83,58 +83,6 @@ export function average(values: number[]): number | null {
     return null
   }
   return values.reduce((sum, value) => sum + value, 0) / values.length
-}
-
-function percentageOf(count: number, total: number): number {
-  return total === 0 ? 0 : Math.round((count / total) * 1000) / 10
-}
-
-const UNKNOWN_VALUE = "__unknown__"
-const UNKNOWN_LABEL = "Not set"
-
-/** Builds a distribution over a fixed, ordered option list (so a category
- * with zero responses still shows up as 0 rather than disappearing) plus
- * a trailing "Not set" bucket for rows where the field is null — only
- * included if at least one row actually has it, so it doesn't clutter
- * charts once the data is clean. */
-function buildOrderedDistribution(
-  rows: AnalyticsRow[],
-  getValue: (row: AnalyticsRow) => string | null,
-  options: SurveyOption[]
-): DistributionBucket[] {
-  const counts = new Map<string, number>()
-  for (const option of options) {
-    counts.set(option.value, 0)
-  }
-
-  let unknownCount = 0
-  for (const row of rows) {
-    const value = getValue(row)
-    if (value === null) {
-      unknownCount += 1
-      continue
-    }
-    counts.set(value, (counts.get(value) ?? 0) + 1)
-  }
-
-  const total = rows.length
-  const buckets = options.map((option) => ({
-    value: option.value,
-    label: option.label,
-    count: counts.get(option.value) ?? 0,
-    percentage: percentageOf(counts.get(option.value) ?? 0, total),
-  }))
-
-  if (unknownCount > 0) {
-    buckets.push({
-      value: UNKNOWN_VALUE,
-      label: UNKNOWN_LABEL,
-      count: unknownCount,
-      percentage: percentageOf(unknownCount, total),
-    })
-  }
-
-  return buckets
 }
 
 function buildArchetypeDistribution(

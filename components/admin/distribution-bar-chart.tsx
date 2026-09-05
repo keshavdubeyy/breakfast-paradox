@@ -22,6 +22,9 @@ interface DistributionBarChartProps {
   /** Rows with a longer label list read better as a taller chart — pass
    * an explicit height rather than letting every chart share one size. */
   height?: number
+  /** When provided, each bar becomes clickable (and shows a pointer
+   * cursor) — used for the "view responses" drill-down on Events. */
+  onBucketClick?: (bucket: DistributionBucket) => void
 }
 
 /** A horizontal bar per category, count + percentage in the tooltip —
@@ -30,6 +33,7 @@ interface DistributionBarChartProps {
 export function DistributionBarChart({
   data,
   height = 220,
+  onBucketClick,
 }: DistributionBarChartProps) {
   const longestLabel = Math.max(...data.map((bucket) => bucket.label.length), 0)
   const axisWidth = Math.min(160, Math.max(80, longestLabel * 7))
@@ -71,7 +75,23 @@ export function DistributionBarChart({
             />
           }
         />
-        <Bar dataKey="count" fill="var(--color-count)" radius={4} />
+        <Bar
+          dataKey="count"
+          fill="var(--color-count)"
+          radius={4}
+          cursor={onBucketClick ? "pointer" : undefined}
+          onClick={
+            onBucketClick
+              ? (barData) => {
+                  const bucket = (barData as { payload?: DistributionBucket })
+                    .payload
+                  if (bucket) {
+                    onBucketClick(bucket)
+                  }
+                }
+              : undefined
+          }
+        />
       </BarChart>
     </ChartContainer>
   )

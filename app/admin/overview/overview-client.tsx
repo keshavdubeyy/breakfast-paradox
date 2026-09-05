@@ -1,9 +1,12 @@
 "use client"
 
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useState } from "react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { FilterIcon } from "@hugeicons/core-free-icons"
 
 import { DistributionBarChart } from "@/components/admin/distribution-bar-chart"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -17,28 +20,22 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Progress, ProgressLabel } from "@/components/ui/progress"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
-import { ARCHETYPE_IDS, ARCHETYPES, type ArchetypeId } from "@/lib/archetype-content"
+import { countActiveFilters, FiltersForm } from "@/components/admin/filters-form"
 import { applyFilters } from "@/lib/analytics/filters"
 import { computeOverviewMetrics } from "@/lib/analytics/metrics"
 import { DEFAULT_FILTERS, type AnalyticsFilters, type AnalyticsRow, type Branch } from "@/lib/analytics/types"
-import {
-  BREAKFAST_FREQUENCY_OPTIONS,
-  EARLY_COMMITMENT_OPTIONS,
-  HOSTEL_OPTIONS,
-  YEAR_OPTIONS,
-} from "@/lib/survey-options"
 
 const BRANCH_LABELS: Record<Branch, string> = {
   A: "Regular eaters",
@@ -80,14 +77,27 @@ export function OverviewClient({ rows, isSampleData }: OverviewClientProps) {
     surveyVersion: latestSurveyVersion,
   }))
 
+  // The sheet edits a draft copy — nothing in `filters` (and so nothing
+  // on screen) changes until "Apply filters" commits it. Opening the
+  // sheet always re-seeds the draft from the currently-applied filters,
+  // so a previous edit that was never applied doesn't reappear.
+  const [draftFilters, setDraftFilters] = useState<AnalyticsFilters>(filters)
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+
   const filteredRows = useMemo(() => applyFilters(rows, filters), [rows, filters])
   const metrics = useMemo(() => computeOverviewMetrics(filteredRows), [filteredRows])
+  const activeFilterCount = countActiveFilters(filters)
 
-  function updateFilter<K extends keyof AnalyticsFilters>(
+  function updateDraftFilter<K extends keyof AnalyticsFilters>(
     key: K,
     value: AnalyticsFilters[K]
   ) {
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setDraftFilters((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function applyDraftFilters() {
+    setFilters(draftFilters)
+    setFilterSheetOpen(false)
   }
 
   function toggleBranch(branch: Branch) {
@@ -121,20 +131,70 @@ export function OverviewClient({ rows, isSampleData }: OverviewClientProps) {
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Overview
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Understand the survey sample and overall breakfast behaviour.
-        </p>
-      </div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Overview
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Understand the survey sample and overall breakfast behaviour.
+          </p>
+        </div>
 
-      <FiltersBar
-        surveyVersions={surveyVersions}
-        filters={filters}
-        onChange={updateFilter}
-      />
+        <Sheet
+          open={filterSheetOpen}
+          onOpenChange={(open) => {
+            if (open) {
+              setDraftFilters(filters)
+            }
+            setFilterSheetOpen(open)
+          }}
+        >
+          <SheetTrigger
+            render={
+              <Button variant="outline" className="shrink-0 gap-1.5">
+                <HugeiconsIcon icon={FilterIcon} strokeWidth={2} className="size-4" />
+                Filters
+                {activeFilterCount > 0 ? (
+                  <Badge variant="secondary" className="ml-0.5">
+                    {activeFilterCount}
+                  </Badge>
+                ) : null}
+              </Button>
+            }
+          />
+          <SheetContent side="right">
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+              <SheetDescription>
+                Choose the sample you want to analyse, then apply.
+              </SheetDescription>
+            </SheetHeader>
+            <FiltersForm
+              surveyVersions={surveyVersions}
+              filters={draftFilters}
+              onChange={updateDraftFilter}
+            />
+            <SheetFooter>
+              <Button type="button" onClick={applyDraftFilters}>
+                Apply filters
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setDraftFilters({
+                    ...DEFAULT_FILTERS,
+                    surveyVersion: latestSurveyVersion,
+                  })
+                }
+              >
+                Reset
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </div>
 
       {filteredRows.length === 0 ? (
         <Empty className="rounded-lg border border-dashed">
@@ -226,198 +286,6 @@ export function OverviewClient({ rows, isSampleData }: OverviewClientProps) {
           <SnapshotCard metrics={metrics} />
         </>
       )}
-    </div>
-  )
-}
-
-interface FiltersBarProps {
-  surveyVersions: number[]
-  filters: AnalyticsFilters
-  onChange: <K extends keyof AnalyticsFilters>(
-    key: K,
-    value: AnalyticsFilters[K]
-  ) => void
-}
-
-function FiltersBar({ surveyVersions, filters, onChange }: FiltersBarProps) {
-  return (
-    <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border/60 bg-card p-4">
-      <FilterField label="Survey version">
-        <Select
-          value={String(filters.surveyVersion)}
-          onValueChange={(value) =>
-            onChange(
-              "surveyVersion",
-              value === "all" ? "all" : Number(value)
-            )
-          }
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All versions</SelectItem>
-            {surveyVersions.map((version) => (
-              <SelectItem key={version} value={String(version)}>
-                Version {version}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterField>
-
-      <FilterField label="Hostel">
-        <Select
-          value={filters.hostel}
-          onValueChange={(value) => onChange("hostel", value as string)}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All hostels</SelectItem>
-            {HOSTEL_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterField>
-
-      <FilterField label="Year">
-        <Select
-          value={filters.year}
-          onValueChange={(value) => onChange("year", value as string)}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All years</SelectItem>
-            {YEAR_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterField>
-
-      <FilterField label="Early commitments">
-        <Select
-          value={filters.earlyCommitmentDays}
-          onValueChange={(value) =>
-            onChange("earlyCommitmentDays", value as string)
-          }
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            {EARLY_COMMITMENT_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterField>
-
-      <FilterField label="Breakfast frequency">
-        <Select
-          value={filters.breakfastFrequency}
-          onValueChange={(value) =>
-            onChange("breakfastFrequency", value as string)
-          }
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            {BREAKFAST_FREQUENCY_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterField>
-
-      <FilterField label="Branch">
-        <Select
-          value={filters.branch}
-          onValueChange={(value) => onChange("branch", value as Branch | "all")}
-        >
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All branches</SelectItem>
-            <SelectItem value="A">Regular eaters</SelectItem>
-            <SelectItem value="B">Conditional eaters</SelectItem>
-            <SelectItem value="C">Rare / non-eaters</SelectItem>
-          </SelectContent>
-        </Select>
-      </FilterField>
-
-      <FilterField label="Archetype">
-        <Select
-          value={filters.primaryArchetype}
-          onValueChange={(value) =>
-            onChange("primaryArchetype", value as ArchetypeId | "all")
-          }
-        >
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All archetypes</SelectItem>
-            {ARCHETYPE_IDS.map((id) => (
-              <SelectItem key={id} value={id}>
-                {ARCHETYPES[id].name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterField>
-
-      <FilterField label="From">
-        <Input
-          type="date"
-          className="w-40"
-          value={filters.dateFrom ?? ""}
-          onChange={(event) =>
-            onChange("dateFrom", event.target.value || null)
-          }
-        />
-      </FilterField>
-
-      <FilterField label="To">
-        <Input
-          type="date"
-          className="w-40"
-          value={filters.dateTo ?? ""}
-          onChange={(event) => onChange("dateTo", event.target.value || null)}
-        />
-      </FilterField>
-    </div>
-  )
-}
-
-function FilterField({
-  label,
-  children,
-}: {
-  label: string
-  children: ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      {children}
     </div>
   )
 }

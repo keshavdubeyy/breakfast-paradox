@@ -2,8 +2,7 @@ import type { ReactNode } from "react"
 import { cookies } from "next/headers"
 
 import { ADMIN_SESSION_COOKIE, verifySessionToken } from "@/lib/admin-auth"
-import { logout } from "@/app/admin/login/actions"
-import { Button } from "@/components/ui/button"
+import { AdminShell } from "@/components/admin/admin-shell"
 
 export default async function AdminLayout({
   children,
@@ -22,24 +21,5 @@ export default async function AdminLayout({
     return children
   }
 
-  return (
-    <div className="flex min-h-svh flex-col bg-background">
-      <header className="flex items-center justify-between border-b border-border/60 px-6 py-4">
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-foreground">
-            Breakfast Paradox — Admin
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Survey analytics, internal only
-          </span>
-        </div>
-        <form action={logout}>
-          <Button type="submit" variant="outline" size="sm">
-            Log out
-          </Button>
-        </form>
-      </header>
-      <main className="flex-1 px-6 py-6">{children}</main>
-    </div>
-  )
+  return <AdminShell>{children}</AdminShell>
 }
