@@ -19,26 +19,26 @@ Not a data question — a gate.
 
 | # | Question | Type | Options | Required | Field(s) |
 |---|---|---|---|---|---|
-| 1 | Which program are you currently enrolled in? | Searchable single-select + Other | Program list + "Other" | Yes | `program`, `programOther` |
-| 2 | Which year of your program are you currently in? | Single-select | 1st–5th year or above, Other/Not applicable | Yes | `year` |
+| 1 | Which program are you enrolled in? | Searchable single-select + Other | Program list + "Other" | Yes | `program`, `programOther` |
+| 2 | Which year of your program are you in? | Single-select | 1st–5th year or above, Other/Not applicable | Yes | `year` |
 | 3 | Which hostel do you currently stay in? | Single-select | Bakul, Parijat, OBH, Kadamba | Yes | `hostel` |
-| 4 | What is your gender? | Single-select | Woman, Man, Non-binary/another identity, Transgender Man, Transgender Woman, Prefer not to say | **No** | `gender` |
-| 5 | In a typical week, on how many days do you have a class, meeting, lab, or other mandatory activity starting before 9:00 AM? | Single-select | 0–4 days, 5+ days | Yes | `earlyCommitmentDays` |
+| 4 | How do you describe your gender? | Single-select | Woman, Man, Non-binary/another identity, Transgender Man, Transgender Woman, Prefer not to say | **No** | `gender` |
+| 5 | In a typical week, on how many days do you have a class, lab, meeting, or other required activity before 9:00 AM? | Single-select | 0–4 days, 5+ days | Yes | `earlyCommitmentDays` |
 
 ### 2. Usual Routine (`/usual-routine`)
 
 | # | Question | Type | Options | Required | Field(s) | Shown when |
 |---|---|---|---|---|---|---|
 | 1 | Around what time do you usually go to sleep? | Time range (weekday+weekend) | Before 11pm → After 3am, No consistent time | Yes | `sleepTimeWeekday/Weekend` | always |
-| 2 | What do you usually spend time doing in the hours before you go to sleep? *(select all)* | Multi-select + Other | Studying, project work, internship/work, club activities, friends, content/gaming/social, late-night eating, exercise, personal tasks, Other | Yes | `beforeSleepActivities`, `beforeSleepActivityOther` | always |
-| 3 | Which of these usually takes up most of your time before you sleep? | Single-select (options = Q2's picks) | — | Yes | `beforeSleepMostTime` | Q2 has ≥1 selection |
-| 4 | Around what time do you generally wake up in the morning? | Time range (weekday+weekend) | Before 6:30am → After 10am, No consistent time | Yes | `wakeTimeWeekday/Weekend` | always |
-| 5 | On a typical weekday, which of the following are usually part of your morning after you wake up? *(select all)* | Multi-select + Other | Get ready, study/work, exercise/sport, go to mess, eat in room, buy/order elsewhere, go to class/meeting/another commitment, go back to sleep, Other | Yes | `morningActivities`, `morningActivityOther` | always |
-| 6 | How is the mess for your breakfast usually decided? | Single-select | Self-registered, auto-allotted, mixed, not sure | Yes | `messDecision` | always |
-| 6a | How would you rate the food quality of the breakfast served at your mess? | Single-select | Very good → very poor, not enough experience | Yes | `messFoodQuality` | always |
-| 6b | How often does your breakfast plan change after it is already too late to cancel that meal? | Single-select | Almost always → Never | Yes | `breakfastPlanChangeFrequency` | always |
-| 6c | When that happens, what do you usually do? *(select all)* | Multi-select + Other | Still use it, exchange, sell, give away, buy others' meal, eat elsewhere, order online, leave unused, skip, Other | Yes | `breakfastPlanChangeActions`, `breakfastPlanChangeActionOther` | 6b ≠ "never" |
-| 7 | **In a typical week, how often do you usually eat breakfast at the mess?** | Single-select | Almost every day, Most days, Some days, Rarely, Never | Yes | `breakfastFrequency` | always — **this is the branch trigger** |
+| 2 | What do you usually do in the few hours before you sleep? *(select all)* | Multi-select + Other | Studying, project work, internship/work, club activities, friends, content/gaming/social, late-night eating, exercise, personal tasks, Other | Yes | `beforeSleepActivities`, `beforeSleepActivityOther` | always |
+| 3 | Which of these usually takes up the most time before you sleep? | Single-select (options = Q2's picks) | — | Yes | `beforeSleepMostTime` | Q2 has ≥1 selection |
+| 4 | Around what time do you usually wake up? | Time range (weekday+weekend) | Before 6:30am → After 10am, No consistent time | Yes | `wakeTimeWeekday/Weekend` | always |
+| 5 | What do you usually do after waking up on a weekday? *(select all)* | Multi-select + Other | Get ready, study/work, exercise/sport, go to mess, eat in room, buy/order elsewhere, go to class/meeting/another commitment, go back to sleep, Other | Yes | `morningActivities`, `morningActivityOther` | always |
+| 6 | How is your breakfast mess usually decided? | Single-select | Self-registered, auto-allotted, mixed, not sure | Yes | `messDecision` | always |
+| 6a | How would you rate the quality of breakfast at your mess? | Single-select | Very good → very poor, not enough experience | Yes | `messFoodQuality` | always |
+| 6b | How often does your breakfast plan change after the cancellation deadline? | Single-select | Almost always → Never | Yes | `breakfastPlanChangeFrequency` | always |
+| 6c | When your plan changes after the cancellation deadline, what do you usually do? *(select all)* | Multi-select + Other | Still use it, exchange, sell, give away, buy others' meal, eat elsewhere, order online, leave unused, skip, Other | Yes | `breakfastPlanChangeActions`, `breakfastPlanChangeActionOther` | 6b ≠ "never" |
+| 7 | **In a typical week, how often do you eat breakfast at the mess?** | Single-select | Almost every day, Most days, Some days, Rarely, Never | Yes | `breakfastFrequency` | always — **this is the branch trigger** |
 
 ### 3. Breakfast Routine (`/breakfast-routine`) — branches on Q7 above
 
@@ -46,68 +46,68 @@ Not a data question — a gate.
 
 | # | Question | Type | Options | Required | Field(s) | Shown when |
 |---|---|---|---|---|---|---|
-| A1 | Around what time do you usually go to the mess for breakfast? | Single-select | Before 7:30am → 9:30am, varies a lot | Yes | `messBreakfastTime` | always (branch) |
-| A2 | At what point in your morning do you usually have breakfast? | Single-select + Other | Before/after getting ready, on the way, just before/after commitment, no fixed point, Other | Yes | `breakfastMoment`, `breakfastMomentOther` | always (branch) |
-| A3 | Around how much time does your usual breakfast routine take (mess → eat → leave)? | Single-select | <10min → >30min, varies a lot | Yes | `breakfastRoutineDuration` | always (branch) |
-| A4 | On early-class days, do you usually change your routine to make time for breakfast? | Single-select | Yes / No / Sometimes | Yes | `earlyClassRoutineChange` | always (branch) |
-| A5 | If yes, what do you usually change? *(select all)* | Multi-select + Other | Wake earlier, get ready faster, less time on other activity, go earlier, eat quicker, choose convenient mess, Other | Yes | `earlyClassRoutineChangeActions` + Other | A4 = yes/sometimes |
-| A6 | Are there days you intend to have breakfast but end up missing it? | Single-select | Often → Never | Yes | `missedBreakfastFrequency` | always (branch) |
-| A7 | What usually happens on those days? *(select all)* | Multi-select + Other | Woke later, earlier commitment, less time, not hungry, don't like menu, mess allocation issue, plans changed, ate elsewhere, Other | Yes | `missedBreakfastReasons` + Other | A6 ≠ "never" |
-| A8 | If the mess you're allotted isn't the one you want, what do you usually do? *(select all)* | Multi-select + Other | Cancel, exchange, sell, give away, buy others' meal, eat elsewhere, leave unused, skip, Other | Yes | `unwantedMessActions` + Other | always (branch) |
-| A9 | Do you usually have breakfast at the same allotted mess? | Single-select | Yes almost always / changes sometimes / changes frequently | Yes | `messConsistency` | always (branch) |
-| A10 | If it changes, what usually determines where you eat? *(select all)* | Multi-select + Other | Allocation, menu, proximity, friends, queue, timing, Other | Yes | `messChangeDeterminants` + Other | A9 ≠ "almost always" |
-| A11 | How would you describe breakfast in your usual morning routine? | Single-select + Other | Actively plan, automatic part, depends on day, decide in moment, Other | Yes | `breakfastRoutineDescription` + Other | always (branch) |
-| A12 | On the days when you do have breakfast at the mess, what usually makes you decide to go? *(select all)* | Multi-select + Other | Feel hungry, part of routine/habit, already paid for it, going with friends, menu that day, time before commitment, helps focus/energy, Other | Yes | `breakfastMotivationFactors` + Other | always (branch) |
+| A1 | What time do you usually go to the mess for breakfast? | Single-select | Before 7:30am → 9:30am, varies a lot | Yes | `messBreakfastTime` | always (branch) |
+| A2 | When does breakfast usually fit into your morning? | Single-select + Other | Before/after getting ready, on the way, just before/after commitment, no fixed point, Other | Yes | `breakfastMoment`, `breakfastMomentOther` | always (branch) |
+| A3 | From reaching the mess to leaving after breakfast, how long does it usually take? | Single-select | <10min → >30min, varies a lot | Yes | `breakfastRoutineDuration` | always (branch) |
+| A4 | On days with a class or other commitment before 9:00 AM, do you change your routine to fit in breakfast? | Single-select | Yes / No / Sometimes | Yes | `earlyClassRoutineChange` | always (branch) |
+| A5 | What do you usually change? *(select all)* | Multi-select + Other | Wake earlier, get ready faster, less time on other activity, go earlier, eat quicker, choose convenient mess, Other | Yes | `earlyClassRoutineChangeActions` + Other | A4 = yes/sometimes |
+| A6 | How often do you plan to eat breakfast at the mess but end up missing it? | Single-select | Often → Never | Yes | `missedBreakfastFrequency` | always (branch) |
+| A7 | What usually makes you miss breakfast on those days? *(select all)* | Multi-select + Other | Woke later, earlier commitment, less time, not hungry, don't like menu, mess allocation issue, plans changed, ate elsewhere, Other | Yes | `missedBreakfastReasons` + Other | A6 ≠ "never" |
+| A8 | If you don't want to eat at your allotted mess, what do you usually do? *(select all)* | Multi-select + Other | Cancel, exchange, sell, give away, buy others' meal, eat elsewhere, leave unused, skip, Other | Yes | `unwantedMessActions` + Other | always (branch) |
+| A9 | How often do you eat breakfast at the same allotted mess? | Single-select | Yes almost always / changes sometimes / changes frequently | Yes | `messConsistency` | always (branch) |
+| A10 | When you eat at a different mess, what usually affects which mess you choose? *(select all)* | Multi-select + Other | Allocation, menu, proximity, friends, queue, timing, Other | Yes | `messChangeDeterminants` + Other | A9 ≠ "almost always" |
+| A11 | Which best describes how breakfast fits into your morning routine? | Single-select + Other | Actively plan, automatic part, depends on day, decide in moment, Other | Yes | `breakfastRoutineDescription` + Other | always (branch) |
+| A12 | What usually makes you choose to eat breakfast at the mess? *(select all)* | Multi-select + Other | Feel hungry, part of routine/habit, already paid for it, going with friends, menu that day, time before commitment, helps focus/energy, Other | Yes | `breakfastMotivationFactors` + Other | always (branch) |
 
 **Branch B — conditional eaters** (`some-days`)
 
 | # | Question | Type | Options | Required | Field(s) | Shown when |
 |---|---|---|---|---|---|---|
-| B1 | On days you have breakfast at the mess, around what time do you usually go? | Single-select | Same time bands as A1 | Yes | `conditionalMessBreakfastTime` | always (branch) |
-| B2 | At what point do you usually decide whether you'll eat breakfast that day? | Single-select | Previous night → varies, no conscious decision | Yes | `breakfastDecisionPoint` | always (branch) |
-| B3 | What's usually different on the days you eat breakfast vs. don't? *(select all)* | Multi-select + Other | Sleep, wake time, first-class time, morning time, menu, allocation, hunger, friends, queue, distance, ate-late-previous-night, unexpected plans, Other | Yes | `breakfastDayDifferentiators` + Other | always (branch) |
-| B4 | How often do you plan to eat breakfast but end up not going? | Single-select | Often → Never | Yes | `breakfastPlannedButSkippedFrequency` | always (branch) |
-| B5 | How often do you initially not plan to, but end up going anyway? | Single-select | Often → Never | Yes | `breakfastUnplannedButWentFrequency` | always (branch) |
-| B6 | What usually makes your breakfast plan change? *(select all)* | Multi-select + Other | Woke different than expected, time different than expected, schedule changed, hunger different, menu, mess allocation, friends' plans, ate late previous night, unexpected event, Other | Yes | `breakfastPlanChangeReasons` + Other | B4 or B5 ≠ "never" |
-| B7 | On the days when you do have breakfast at the mess, what usually makes you decide to go? *(select all)* | Multi-select + Other | Feel hungry, part of routine/habit, already paid for it, going with friends, menu that day, time before commitment, helps focus/energy, Other | Yes | `breakfastMotivationFactors` + Other | always (branch) |
+| B1 | On days you eat breakfast at the mess, what time do you usually go? | Single-select | Same time bands as A1 | Yes | `conditionalMessBreakfastTime` | always (branch) |
+| B2 | When do you usually decide whether to eat breakfast at the mess that day? | Single-select | Previous night → varies, no conscious decision | Yes | `breakfastDecisionPoint` | always (branch) |
+| B3 | What is usually different between days you eat breakfast at the mess and days you don't? *(select all)* | Multi-select + Other | Sleep, wake time, first-class time, morning time, menu, allocation, hunger, friends, queue, distance, ate-late-previous-night, unexpected plans, Other | Yes | `breakfastDayDifferentiators` + Other | always (branch) |
+| B4 | How often do you plan to eat breakfast at the mess but end up not going? | Single-select | Often → Never | Yes | `breakfastPlannedButSkippedFrequency` | always (branch) |
+| B5 | How often do you plan not to eat at the mess but end up going? | Single-select | Often → Never | Yes | `breakfastUnplannedButWentFrequency` | always (branch) |
+| B6 | When you had already decided what to do, what usually makes you change that decision? *(select all)* | Multi-select + Other | Woke different than expected, time different than expected, schedule changed, hunger different, menu, mess allocation, friends' plans, ate late previous night, unexpected event, Other | Yes | `breakfastPlanChangeReasons` + Other | B4 or B5 ≠ "never" |
+| B7 | What usually makes you choose to eat breakfast at the mess? *(select all)* | Multi-select + Other | Feel hungry, part of routine/habit, already paid for it, going with friends, menu that day, time before commitment, helps focus/energy, Other | Yes | `breakfastMotivationFactors` + Other | always (branch) |
 
 **Branch C — rare/non-eaters** (`rarely` / `never`)
 
 | # | Question | Type | Options | Required | Field(s) | Shown when |
 |---|---|---|---|---|---|---|
-| C1 | During the time breakfast is usually served, what are you most often doing? | Single-select + Other | Sleeping, getting ready, travelling, already in class, studying/working, exercising, something else | Yes | `breakfastServedTimeActivity` + Other | always (branch) |
-| C2 | Is not going a conscious decision, or does it just not become part of your routine? | Single-select | Decide not to go / not part of routine / depends / haven't thought about it | Yes | `breakfastAbsenceReason` | always (branch) |
-| C3 | At what point do you usually know you won't go to the mess for breakfast? | Single-select | Previous night → varies, no conscious decision | Yes | `breakfastAbsenceDecisionPoint` | always (branch) |
-| C4 | Are there situations when you do end up having breakfast at the mess? | Single-select | Yes sometimes / very rarely / never | Yes | `occasionalBreakfastFrequency` | always (branch) |
-| C5 | If yes, what's usually different on those days? *(select all)* | Multi-select + Other | More time, woke earlier, no early commitment, menu wanted, felt hungry, friends going, different mess allocation, Other | Yes | `occasionalBreakfastDifferentiators` + Other | C4 ≠ "never" |
-| C6 | On the days when you do have breakfast at the mess, what usually makes you decide to go? *(select all)* | Multi-select + Other | Feel hungry, part of routine/habit, already paid for it, going with friends, menu that day, time before commitment, helps focus/energy, Other | Yes | `breakfastMotivationFactors` + Other | C4 ≠ "never" (same gate as C5 — skipped entirely for respondents who never eat breakfast) |
-| C7 | When you don't use a registered/allotted breakfast, what usually happens to it? *(select all)* | Multi-select + Other | Sell, exchange, give away, leave unused, try-to-transfer-sometimes-can't, not sure, Other | Yes | `unusedAllottedMealActions` + Other | always (branch) |
-| C8 | Have there been times you used to eat breakfast more often than now? | Single-select | Yes / No / Not sure | Yes | `breakfastFrequencyChanged` | always (branch) |
-| C9 | If yes, what changed? | Open text | — | Yes | `breakfastFrequencyChangeDescription` | C8 = "yes" |
+| C1 | During breakfast hours, what are you usually doing instead? | Single-select + Other | Sleeping, getting ready, travelling, already in class, studying/working, exercising, something else | Yes | `breakfastServedTimeActivity` + Other | always (branch) |
+| C2 | Which best describes why you usually don't go to the mess for breakfast? | Single-select | Decide not to go / not part of routine / depends / haven't thought about it | Yes | `breakfastAbsenceReason` | always (branch) |
+| C3 | When do you usually know that you won't go to the mess for breakfast? | Single-select | Previous night → varies, no conscious decision | Yes | `breakfastAbsenceDecisionPoint` | always (branch) |
+| C4 | Do you ever eat breakfast at the mess? | Single-select | Yes sometimes / very rarely / never | Yes | `occasionalBreakfastFrequency` | always (branch) |
+| C5 | On days when you do eat at the mess, what is usually different about that morning? *(select all)* | Multi-select + Other | More time, woke earlier, no early commitment, menu wanted, felt hungry, friends going, different mess allocation, Other | Yes | `occasionalBreakfastDifferentiators` + Other | C4 ≠ "never" |
+| C6 | What usually makes you decide to go to the mess on those days? *(select all)* | Multi-select + Other | Feel hungry, part of routine/habit, already paid for it, going with friends, menu that day, time before commitment, helps focus/energy, Other | Yes | `breakfastMotivationFactors` + Other | C4 ≠ "never" (same gate as C5 — skipped entirely for respondents who never eat breakfast) |
+| C7 | If a breakfast is registered or allotted to you but you don't use it, what do you usually do with it? *(select all)* | Multi-select + Other | Sell, exchange, give away, leave unused, try-to-transfer-sometimes-can't, not sure, Other | Yes | `unusedAllottedMealActions` + Other | always (branch) |
+| C8 | Did you use to eat breakfast at the mess more often than you do now? | Single-select | Yes / No / Not sure | Yes | `breakfastFrequencyChanged` | always (branch) |
+| C9 | What changed? | Open text | — | Yes | `breakfastFrequencyChangeDescription` | C8 = "yes" |
 
 ### 4. After Your Morning Routine (`/after-morning-routine`)
 
 | # | Question | Type | Options | Required | Field(s) | Shown when |
 |---|---|---|---|---|---|---|
-| 1 | On days you don't eat breakfast at the mess, what do you usually do before lunch? | Single-select + Other | Eat in room, buy from canteen, order online, eat elsewhere on campus, wait until lunch, varies, Other | Yes | `nonBreakfastMealSource` + Other | always |
-| 2 | Around what time do you usually have your next food/drink (other than water)? | Single-select | Before 10am → after lunch, varies a lot | Yes | `nextFoodTime` | always |
-| 3 | On early-commitment days, how often do you eat breakfast at the mess? | Single-select | Almost always → Never, Not applicable | Yes | `earlyCommitmentBreakfastFrequency` | always |
-| 4 | On non-early-commitment days, how often do you eat breakfast at the mess? | Single-select | Almost always → Never | Yes | `noEarlyCommitmentBreakfastFrequency` | always |
-| 5 | Compared with weekdays, how often do you eat breakfast on weekends? | Single-select | More often / about the same / less often / rarely-never either | Yes | `weekendBreakfastComparison` | always |
-| 6 | What's usually different about your weekends? *(select all)* | Multi-select + Other | Sleep later, wake later, fewer commitments, more morning time, different food plans, different friend plans, Other | Yes | `weekendDifferentiators` + Other | Q5 = more/less often |
-| 7 | How often do you spend money on food before lunch on non-breakfast days? | Single-select | Never → Almost always | Yes | `nonBreakfastSpendingFrequency` | always |
-| 8 | Approximately how much do you usually spend before lunch on those days? | Single-select | Under ₹50 → >₹150, varies a lot | Yes | `nonBreakfastSpendingAmount` | Q7 ≠ "never" |
-| 9 | Compared with the start of this semester, has your breakfast frequency changed? | Single-select | More now / same / less now / back-and-forth / not sure | Yes | `semesterBreakfastChange` | always |
-| 10 | What changed around the same time? | Open text (multi-line) | — | Yes | `semesterBreakfastChangeDescription` | Q9 = more/less/back-and-forth |
-| 11 | Compared with days you eat breakfast, how do you feel before lunch on days you don't? | Rating grid: energy, concentration, hunger | Much lower → much higher, can't compare | Yes | `comparisonRatings` | branch-dependent (see below) |
-| 12 | Does what happened the previous night affect whether you have breakfast? | Single-select | Yes often / sometimes / rarely / never / depends | Yes | `previousNightAffectsBreakfast` | always |
-| 13 | What usually affects that decision? *(select all)* | Multi-select + Other | Ate late, ordered food/canteen, wake hungry/not, felt low energy after skipping, had to buy food later, next-morning schedule, Other | Yes | `previousNightFactors` + Other | Q12 = yes-often/sometimes/rarely |
-| 14 | How much do the following usually affect whether you eat breakfast? | Rating grid, **15 rows** (sleep, first-class time, morning time, serving time, menu, mess allocation, distance, **embedded attention check**, queue, friends, waking hunger, ate-late-previous-night, canteen availability, online ordering, resale ability) | Not at all → Very strongly | Yes | `influenceRatings` | always |
-| 15 | Of those, which has the biggest influence? | Single-select (= Q14's rows, **attention-check row excluded**, so 14 options) | — | Yes | `biggestInfluenceFactor` | always |
-| 16 | Thinking about how often you actually use your registered/allotted breakfast, how do you feel about what you pay for it? | Single-select | Good value, okay/not every time, somewhat wasteful, very wasteful, not sure how cost works, not applicable | Yes | `mealValuePerception` | always |
-| 17 | How much do you agree with the following? | Rating grid, 9 statements (sleep-over-breakfast, eat-later-instead, class-on-time-over-breakfast, already-paid-use-whenever, resale-reduces-concern, planned-in-advance, depends-on-morning, no-hunger-no-reason, inconvenient-eat-later) | Strongly disagree → strongly agree | Yes | `agreementRatings` | always |
-| 18 | Which would make it easier to have breakfast more regularly? *(select up to 3)* | Multi-select (capped at 3) + Other | Better timing, faster options, better menu, easier mess changes, more cancel flexibility, official exchange system, shorter queues, closer breakfast, fewer early commitments, nothing would change it, Other | Yes | `breakfastImprovementOptions` + Other | always |
-| 19 | If you could change one thing about the breakfast system, what and why? | Open text (multi-line) | — | Yes | `breakfastSystemChangeSuggestion` | always |
+| 1 | On days you don't eat breakfast at the mess, what do you usually do for food before lunch? | Single-select + Other | Eat in room, buy from canteen, order online, eat elsewhere on campus, wait until lunch, varies, Other | Yes | `nonBreakfastMealSource` + Other | always |
+| 2 | On those days, when do you usually have your first food or drink other than water? | Single-select | Before 10am → after lunch, varies a lot | Yes | `nextFoodTime` | always |
+| 3 | On days with a class or other required activity before 9:00 AM, how often do you eat breakfast at the mess? | Single-select | Almost always → Never, Not applicable | Yes | `earlyCommitmentBreakfastFrequency` | always |
+| 4 | On days without a required activity before 9:00 AM, how often do you eat breakfast at the mess? | Single-select | Almost always → Never | Yes | `noEarlyCommitmentBreakfastFrequency` | always |
+| 5 | Compared with weekdays, how often do you eat breakfast at the mess on weekends? | Single-select | More often / about the same / less often / rarely-never either | Yes | `weekendBreakfastComparison` | always |
+| 6 | When your weekend pattern is different, what is usually different about your weekends? *(select all)* | Multi-select + Other | Sleep later, wake later, fewer commitments, more morning time, different food plans, different friend plans, Other | Yes | `weekendDifferentiators` + Other | Q5 = more/less often |
+| 7 | On days you don't eat breakfast at the mess, how often do you spend money on food or drinks before lunch? | Single-select | Never → Almost always | Yes | `nonBreakfastSpendingFrequency` | always |
+| 8 | When you spend money before lunch, about how much do you usually spend? | Single-select | Under ₹50 → >₹150, varies a lot | Yes | `nonBreakfastSpendingAmount` | Q7 ≠ "never" |
+| 9 | Compared with the start of this semester, how often do you eat breakfast at the mess now? | Single-select | More now / same / less now / back-and-forth / not sure | Yes | `semesterBreakfastChange` | always |
+| 10 | What changed around the same time as your breakfast routine? | Open text (multi-line) | — | Yes | `semesterBreakfastChangeDescription` | Q9 = more/less/back-and-forth |
+| 11 | Before lunch, how do these compare on days you skip mess breakfast? | Rating grid: energy, concentration, hunger | Much lower → much higher, can't compare | Yes | `comparisonRatings` | branch-dependent (see below) |
+| 12 | Does what happens the night before affect whether you eat breakfast at the mess the next morning? | Single-select | Yes often / sometimes / rarely / never / depends | Yes | `previousNightAffectsBreakfast` | always |
+| 13 | What usually affects that next-morning decision? *(select all)* | Multi-select + Other | Ate late, ordered food/canteen, wake hungry/not, felt low energy after skipping, had to buy food later, next-morning schedule, Other | Yes | `previousNightFactors` + Other | Q12 = yes-often/sometimes/rarely |
+| 14 | How much does each of these affect whether you eat breakfast at the mess? | Rating grid, **15 rows** (sleep, first-class time, morning time, serving time, menu, mess allocation, distance, **embedded attention check**, queue, friends, waking hunger, ate-late-previous-night, canteen availability, online ordering, resale ability) | Not at all → Very strongly | Yes | `influenceRatings` | always |
+| 15 | Which ONE has the biggest influence on whether you eat breakfast at the mess? | Single-select (= Q14's rows, **attention-check row excluded**, so 14 options) | — | Yes | `biggestInfluenceFactor` | always |
+| 16 | Considering how often you use your registered or allotted breakfast, how would you describe its value for what you pay? | Single-select | Good value, okay/not every time, somewhat wasteful, very wasteful, not sure how cost works, not applicable | Yes | `mealValuePerception` | always |
+| 17 | How much do you agree or disagree with each statement? | Rating grid, 9 statements (sleep-over-breakfast, eat-later-instead, class-on-time-over-breakfast, already-paid-use-whenever, resale-reduces-concern, planned-in-advance, depends-on-morning, no-hunger-no-reason, inconvenient-eat-later) | Strongly disagree → strongly agree | Yes | `agreementRatings` | always |
+| 18 | Which changes would make it easier for you to eat breakfast at the mess more often? *(select up to 3)* | Multi-select (capped at 3) + Other | Better timing, faster options, better menu, easier mess changes, more cancel flexibility, official exchange system, shorter queues, closer breakfast, fewer early commitments, nothing would change it, Other | Yes | `breakfastImprovementOptions` + Other | always |
+| 19 | If you could change one thing about the current breakfast system, what would it be? | Open text (multi-line) | — | Yes | `breakfastSystemChangeSuggestion` | always |
 
 *Q11's visibility: Branch B → always shown; Branch A → shown only if `missedBreakfastFrequency` is "sometimes"/"rarely"; Branch C → shown only if `occasionalBreakfastFrequency` ≠ "never". Its "Hunger" row now carries a clarifying caption ("'Higher' means feeling hungrier than usual — not necessarily worse, just different") to disambiguate direction against the Energy/Concentration rows, where higher is unambiguously better.*
 
@@ -165,9 +165,9 @@ Originally six content gaps were flagged. Three were implemented; three were del
 
 **Implemented:**
 
-1. ~~No direct motivation-to-eat question~~ → **Added**: "On the days when you do have breakfast at the mess, what usually makes you decide to go?" (multi-select + Other), asked at the end of each branch on `/breakfast-routine` — always for Branch A/B, gated on `occasionalBreakfastFrequency ≠ "never"` for Branch C. Field: `breakfastMotivationFactors`.
-2. ~~No perceived-value/fairness question~~ → **Added**: "Thinking about how often you actually use your registered/allotted breakfast, how do you feel about what you pay for it?" on `/after-morning-routine`, right before the agreement-statements grid. Field: `mealValuePerception`.
-3. ~~No food-quality/satisfaction question~~ → **Added**: "How would you rate the food quality of the breakfast served at your mess?" on `/usual-routine`, right after the mess-decision question. Field: `messFoodQuality`.
+1. ~~No direct motivation-to-eat question~~ → **Added**: "What usually makes you choose to eat breakfast at the mess?" (multi-select + Other), asked at the end of each branch on `/breakfast-routine` — always for Branch A/B, gated on `occasionalBreakfastFrequency ≠ "never"` for Branch C. Field: `breakfastMotivationFactors`.
+2. ~~No perceived-value/fairness question~~ → **Added**: "Considering how often you use your registered or allotted breakfast, how would you describe its value for what you pay?" on `/after-morning-routine`, right before the agreement-statements grid. Field: `mealValuePerception`.
+3. ~~No food-quality/satisfaction question~~ → **Added**: "How would you rate the quality of breakfast at your mess?" on `/usual-routine`, right after the mess-decision question. Field: `messFoodQuality`.
 
 **Deliberately dropped** (students wouldn't have the context to answer meaningfully):
 

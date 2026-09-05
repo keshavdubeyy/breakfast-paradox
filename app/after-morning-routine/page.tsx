@@ -579,7 +579,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("nonBreakfastMealSource")}
-          title="On days when you don’t eat breakfast at the mess, what do you usually do before lunch?"
+          title="On days you don't eat breakfast at the mess, what do you usually do for food before lunch?"
           helperText="Select the option that happens most often."
           required
           error={errors.nonBreakfastMealSource}
@@ -629,7 +629,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("nextFoodTime")}
-          title="Around what time do you usually have your next food or drink other than water?"
+          title="On those days, when do you usually have your first food or drink other than water?"
           required
           error={errors.nextFoodTime}
         >
@@ -663,7 +663,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("earlyCommitmentBreakfastFrequency")}
-          title="On days when you have a class, lab, meeting, or other mandatory activity before 9:00 AM, how often do you eat breakfast at the mess?"
+          title="On days with a class or other required activity before 9:00 AM, how often do you eat breakfast at the mess?"
           required
           error={errors.earlyCommitmentBreakfastFrequency}
         >
@@ -700,7 +700,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("noEarlyCommitmentBreakfastFrequency")}
-          title="On days when you do not have a mandatory activity before 9:00 AM, how often do you eat breakfast at the mess?"
+          title="On days without a required activity before 9:00 AM, how often do you eat breakfast at the mess?"
           required
           error={errors.noEarlyCommitmentBreakfastFrequency}
         >
@@ -771,7 +771,7 @@ export default function AfterMorningRoutinePage() {
         {showsWeekendDifferentiators(values) ? (
           <QuestionBlock
             ref={registerBlock("weekendDifferentiators")}
-            title="What is usually different about your weekends?"
+            title="When your weekend pattern is different, what is usually different about your weekends?"
             helperText="Select all that apply."
             required
             error={errors.weekendDifferentiators}
@@ -829,7 +829,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("nonBreakfastSpendingFrequency")}
-          title="On days when you don't eat breakfast at the mess, how often do you spend money on food or drinks before lunch?"
+          title="On days you don't eat breakfast at the mess, how often do you spend money on food or drinks before lunch?"
           required
           error={errors.nonBreakfastSpendingFrequency}
         >
@@ -863,7 +863,7 @@ export default function AfterMorningRoutinePage() {
         {showsNonBreakfastSpendingAmount(values) ? (
           <QuestionBlock
             ref={registerBlock("nonBreakfastSpendingAmount")}
-            title="Approximately how much do you usually spend before lunch on those days?"
+            title="When you spend money before lunch, about how much do you usually spend?"
             required
             error={errors.nonBreakfastSpendingAmount}
           >
@@ -898,7 +898,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("semesterBreakfastChange")}
-          title="Compared with the beginning of this semester, has how often you eat breakfast at the mess changed?"
+          title="Compared with the start of this semester, how often do you eat breakfast at the mess now?"
           required
           error={errors.semesterBreakfastChange}
         >
@@ -932,7 +932,7 @@ export default function AfterMorningRoutinePage() {
         {showsSemesterBreakfastChangeDescription(values) ? (
           <QuestionBlock
             ref={registerBlock("semesterBreakfastChangeDescription")}
-            title="What changed around the same time?"
+            title="What changed around the same time as your breakfast routine?"
             required
             error={errors.semesterBreakfastChangeDescription}
           >
@@ -956,7 +956,7 @@ export default function AfterMorningRoutinePage() {
         {showsMatrix ? (
           <QuestionBlock
             ref={registerBlock("comparisonRatings")}
-            title="Compared with days when you eat breakfast at the mess, how do you usually feel before lunch on days when you don’t?"
+            title="Before lunch, how do these compare on days you skip mess breakfast?"
             required
             error={errors.comparisonRatings}
           >
@@ -981,7 +981,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("previousNightAffectsBreakfast")}
-          title="Does what happened the previous night or earlier in the day usually affect whether you have breakfast the next morning?"
+          title="Does what happens the night before affect whether you eat breakfast at the mess the next morning?"
           required
           error={errors.previousNightAffectsBreakfast}
         >
@@ -1015,7 +1015,7 @@ export default function AfterMorningRoutinePage() {
         {showsPreviousNightFactors(values) ? (
           <QuestionBlock
             ref={registerBlock("previousNightFactors")}
-            title="What usually affects that decision?"
+            title="What usually affects that next-morning decision?"
             helperText="Select all that apply."
             required
             error={errors.previousNightFactors}
@@ -1071,7 +1071,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("influenceRatings")}
-          title="How much do the following usually affect whether you eat breakfast at the mess?"
+          title="How much does each of these affect whether you eat breakfast at the mess?"
           required
           error={errors.influenceRatings}
         >
@@ -1095,7 +1095,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("biggestInfluenceFactor")}
-          title="Of the factors above, which one usually has the biggest influence on whether you eat breakfast at the mess?"
+          title="Which ONE has the biggest influence on whether you eat breakfast at the mess?"
           required
           error={errors.biggestInfluenceFactor}
         >
@@ -1131,7 +1131,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("mealValuePerception")}
-          title="Thinking about how often you actually use your registered/allotted breakfast, how do you feel about what you pay for it?"
+          title="Considering how often you use your registered or allotted breakfast, how would you describe its value for what you pay?"
           required
           error={errors.mealValuePerception}
         >
@@ -1165,7 +1165,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("agreementRatings")}
-          title="How much do you agree with the following statements?"
+          title="How much do you agree or disagree with each statement?"
           required
           error={errors.agreementRatings}
         >
@@ -1195,7 +1195,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("breakfastImprovementOptions")}
-          title="Which of the following would make it easier for you to have breakfast at the mess more regularly?"
+          title="Which changes would make it easier for you to eat breakfast at the mess more often?"
           helperText={`Select up to ${MAX_BREAKFAST_IMPROVEMENT_SELECTIONS}.`}
           required
           error={errors.breakfastImprovementOptions}
@@ -1256,7 +1256,7 @@ export default function AfterMorningRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("breakfastSystemChangeSuggestion")}
-          title="If you could change one thing about the current breakfast system, what would you change and why?"
+          title="If you could change one thing about the current breakfast system, what would it be?"
           required
           error={errors.breakfastSystemChangeSuggestion}
         >

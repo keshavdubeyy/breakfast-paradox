@@ -662,7 +662,7 @@ export default function BreakfastRoutinePage() {
           <>
             <QuestionBlock
               ref={registerBlock("messBreakfastTime")}
-              title="Around what time do you usually go to the mess for breakfast?"
+              title="What time do you usually go to the mess for breakfast?"
               required
               error={errors.messBreakfastTime}
             >
@@ -696,7 +696,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastMoment")}
-              title="At what point in your morning do you usually have breakfast?"
+              title="When does breakfast usually fit into your morning?"
               required
               error={errors.breakfastMoment}
             >
@@ -743,7 +743,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastRoutineDuration")}
-              title="Around how much time does your usual breakfast routine take, including going to the mess, eating, and leaving?"
+              title="From reaching the mess to leaving after breakfast, how long does it usually take?"
               required
               error={errors.breakfastRoutineDuration}
             >
@@ -777,7 +777,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("earlyClassRoutineChange")}
-              title="On days when you have an early class or commitment, do you usually change your morning routine to make time for breakfast?"
+              title="On days with a class or other commitment before 9:00 AM, do you change your routine to fit in breakfast?"
               required
               error={errors.earlyClassRoutineChange}
             >
@@ -811,7 +811,7 @@ export default function BreakfastRoutinePage() {
             {showsEarlyClassRoutineChangeActions(values) ? (
               <QuestionBlock
                 ref={registerBlock("earlyClassRoutineChangeActions")}
-                title="If yes, what do you usually change?"
+                title="What do you usually change?"
                 helperText="Select all that apply."
                 required
                 error={errors.earlyClassRoutineChangeActions}
@@ -869,7 +869,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("missedBreakfastFrequency")}
-              title="Are there days when you usually intend to have breakfast at the mess but end up missing it?"
+              title="How often do you plan to eat breakfast at the mess but end up missing it?"
               required
               error={errors.missedBreakfastFrequency}
             >
@@ -903,7 +903,7 @@ export default function BreakfastRoutinePage() {
             {showsMissedBreakfastReasons(values) ? (
               <QuestionBlock
                 ref={registerBlock("missedBreakfastReasons")}
-                title="What usually happens on those days?"
+                title="What usually makes you miss breakfast on those days?"
                 helperText="Select all that apply."
                 required
                 error={errors.missedBreakfastReasons}
@@ -961,7 +961,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("unwantedMessActions")}
-              title="If the mess you are allotted/registered for is not the one you want, what do you usually do?"
+              title="If you don't want to eat at your allotted mess, what do you usually do?"
               helperText="Select all that apply."
               required
               error={errors.unwantedMessActions}
@@ -1016,7 +1016,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("messConsistency")}
-              title="Do you usually have breakfast at the same allotted mess?"
+              title="How often do you eat breakfast at the same allotted mess?"
               required
               error={errors.messConsistency}
             >
@@ -1050,7 +1050,7 @@ export default function BreakfastRoutinePage() {
             {showsMessChangeDeterminants(values) ? (
               <QuestionBlock
                 ref={registerBlock("messChangeDeterminants")}
-                title="If it changes, what usually determines where you eat?"
+                title="When you eat at a different mess, what usually affects which mess you choose?"
                 helperText="Select all that apply."
                 required
                 error={errors.messChangeDeterminants}
@@ -1108,7 +1108,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastRoutineDescription")}
-              title="How would you describe breakfast in your usual morning routine?"
+              title="Which best describes how breakfast fits into your morning routine?"
               required
               error={errors.breakfastRoutineDescription}
             >
@@ -1158,7 +1158,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastMotivationFactors")}
-              title="On the days when you do have breakfast at the mess, what usually makes you decide to go?"
+              title="What usually makes you choose to eat breakfast at the mess?"
               helperText="Select all that apply."
               required
               error={errors.breakfastMotivationFactors}
@@ -1219,7 +1219,7 @@ export default function BreakfastRoutinePage() {
           <>
             <QuestionBlock
               ref={registerBlock("conditionalMessBreakfastTime")}
-              title="On days when you have breakfast at the mess, around what time do you usually go?"
+              title="On days you eat breakfast at the mess, what time do you usually go?"
               required
               error={errors.conditionalMessBreakfastTime}
             >
@@ -1253,7 +1253,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastDecisionPoint")}
-              title="At what point do you usually decide whether you will eat breakfast at the mess that day?"
+              title="When do you usually decide whether to eat breakfast at the mess that day?"
               required
               error={errors.breakfastDecisionPoint}
             >
@@ -1287,7 +1287,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastDayDifferentiators")}
-              title="What is usually different on the days when you eat breakfast at the mess compared with the days when you don’t?"
+              title="What is usually different between days you eat breakfast at the mess and days you don't?"
               helperText="Select all that apply."
               required
               error={errors.breakfastDayDifferentiators}
@@ -1380,7 +1380,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastUnplannedButWentFrequency")}
-              title="How often do you initially not plan to eat breakfast at the mess but end up going anyway?"
+              title="How often do you plan not to eat at the mess but end up going?"
               required
               error={errors.breakfastUnplannedButWentFrequency}
             >
@@ -1417,7 +1417,7 @@ export default function BreakfastRoutinePage() {
             {showsBreakfastPlanChangeReasons(values) ? (
               <QuestionBlock
                 ref={registerBlock("breakfastPlanChangeReasons")}
-                title="What usually makes your breakfast plan change?"
+                title="When you had already decided what to do, what usually makes you change that decision?"
                 helperText="Select all that apply."
                 required
                 error={errors.breakfastPlanChangeReasons}
@@ -1475,7 +1475,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastMotivationFactors")}
-              title="On the days when you do have breakfast at the mess, what usually makes you decide to go?"
+              title="What usually makes you choose to eat breakfast at the mess?"
               helperText="Select all that apply."
               required
               error={errors.breakfastMotivationFactors}
@@ -1536,7 +1536,7 @@ export default function BreakfastRoutinePage() {
           <>
             <QuestionBlock
               ref={registerBlock("breakfastServedTimeActivity")}
-              title="During the time breakfast is usually being served, what are you most often doing?"
+              title="During breakfast hours, what are you usually doing instead?"
               required
               error={errors.breakfastServedTimeActivity}
             >
@@ -1586,7 +1586,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastAbsenceReason")}
-              title="Is not going to the mess for breakfast usually a conscious decision for you, or does it simply not become part of your morning routine?"
+              title="Which best describes why you usually don't go to the mess for breakfast?"
               required
               error={errors.breakfastAbsenceReason}
             >
@@ -1620,7 +1620,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastAbsenceDecisionPoint")}
-              title="At what point do you usually know that you will not go to the mess for breakfast?"
+              title="When do you usually know that you won't go to the mess for breakfast?"
               required
               error={errors.breakfastAbsenceDecisionPoint}
             >
@@ -1654,7 +1654,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("occasionalBreakfastFrequency")}
-              title="Are there situations when you do end up having breakfast at the mess?"
+              title="Do you ever eat breakfast at the mess?"
               required
               error={errors.occasionalBreakfastFrequency}
             >
@@ -1688,7 +1688,7 @@ export default function BreakfastRoutinePage() {
             {showsOccasionalBreakfastDifferentiators(values) ? (
               <QuestionBlock
                 ref={registerBlock("occasionalBreakfastDifferentiators")}
-                title="If yes, what is usually different on those days?"
+                title="On days when you do eat at the mess, what is usually different about that morning?"
                 helperText="Select all that apply."
                 required
                 error={errors.occasionalBreakfastDifferentiators}
@@ -1749,7 +1749,7 @@ export default function BreakfastRoutinePage() {
             {showsOccasionalBreakfastDifferentiators(values) ? (
               <QuestionBlock
                 ref={registerBlock("breakfastMotivationFactors")}
-                title="On the days when you do have breakfast at the mess, what usually makes you decide to go?"
+                title="What usually makes you decide to go to the mess on those days?"
                 helperText="Select all that apply."
                 required
                 error={errors.breakfastMotivationFactors}
@@ -1807,7 +1807,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("unusedAllottedMealActions")}
-              title="When you don't use a breakfast that has been registered or automatically allotted to you, what usually happens to that meal?"
+              title="If a breakfast is registered or allotted to you but you don't use it, what do you usually do with it?"
               helperText="Select all that apply."
               required
               error={errors.unusedAllottedMealActions}
@@ -1864,7 +1864,7 @@ export default function BreakfastRoutinePage() {
 
             <QuestionBlock
               ref={registerBlock("breakfastFrequencyChanged")}
-              title="Have there been times when you used to eat breakfast at the mess more often than you do now?"
+              title="Did you use to eat breakfast at the mess more often than you do now?"
               required
               error={errors.breakfastFrequencyChanged}
             >
@@ -1898,7 +1898,7 @@ export default function BreakfastRoutinePage() {
             {showsBreakfastFrequencyChangeDescription(values) ? (
               <QuestionBlock
                 ref={registerBlock("breakfastFrequencyChangeDescription")}
-                title="If yes, what changed?"
+                title="What changed?"
                 required
                 error={errors.breakfastFrequencyChangeDescription}
               >

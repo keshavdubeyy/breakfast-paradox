@@ -180,7 +180,7 @@ export default function AboutYouPage() {
 
         <QuestionBlock
           ref={registerBlock("program")}
-          title="Which program are you currently enrolled in?"
+          title="Which program are you enrolled in?"
           required
           error={errors.program}
         >
@@ -257,7 +257,7 @@ export default function AboutYouPage() {
 
         <QuestionBlock
           ref={registerBlock("year")}
-          title="Which year of your program are you currently in?"
+          title="Which year of your program are you in?"
           required
           error={errors.year}
         >
@@ -325,7 +325,7 @@ export default function AboutYouPage() {
 
         <QuestionBlock
           ref={registerBlock("gender")}
-          title="What is your gender?"
+          title="How do you describe your gender?"
         >
           {() => (
             <RadioGroup
@@ -355,7 +355,7 @@ export default function AboutYouPage() {
 
         <QuestionBlock
           ref={registerBlock("earlyCommitmentDays")}
-          title="In a typical week, on how many days do you have a class, meeting, lab, or other mandatory activity starting before 9:00 AM?"
+          title="In a typical week, on how many days do you have a class, lab, meeting, or other required activity before 9:00 AM?"
           required
           error={errors.earlyCommitmentDays}
         >

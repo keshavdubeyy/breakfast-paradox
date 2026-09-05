@@ -335,7 +335,7 @@ export default function UsualRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("beforeSleepActivities")}
-          title="What do you usually spend time doing in the hours before you go to sleep?"
+          title="What do you usually do in the few hours before you sleep?"
           helperText="Select all that apply."
           required
           error={errors.beforeSleepActivities}
@@ -388,7 +388,7 @@ export default function UsualRoutinePage() {
         {values.beforeSleepActivities.length > 0 ? (
           <QuestionBlock
             ref={registerBlock("beforeSleepMostTime")}
-            title="Which of these usually takes up most of your time before you sleep?"
+            title="Which of these usually takes up the most time before you sleep?"
             required
             error={errors.beforeSleepMostTime}
           >
@@ -426,7 +426,7 @@ export default function UsualRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("wakeTime")}
-          title="Around what time do you generally wake up in the morning?"
+          title="Around what time do you usually wake up?"
           required
           error={errors.wakeTime}
         >
@@ -452,7 +452,7 @@ export default function UsualRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("morningActivities")}
-          title="On a typical weekday, which of the following are usually part of your morning after you wake up?"
+          title="What do you usually do after waking up on a weekday?"
           helperText="Select all that apply."
           required
           error={errors.morningActivities}
@@ -499,7 +499,7 @@ export default function UsualRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("messDecision")}
-          title="How is the mess for your breakfast usually decided?"
+          title="How is your breakfast mess usually decided?"
           required
           error={errors.messDecision}
         >
@@ -533,7 +533,7 @@ export default function UsualRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("messFoodQuality")}
-          title="How would you rate the food quality of the breakfast served at your mess?"
+          title="How would you rate the quality of breakfast at your mess?"
           required
           error={errors.messFoodQuality}
         >
@@ -567,7 +567,7 @@ export default function UsualRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("breakfastPlanChangeFrequency")}
-          title="How often does your breakfast plan change after it is already too late to cancel that meal?"
+          title="How often does your breakfast plan change after the cancellation deadline?"
           required
           error={errors.breakfastPlanChangeFrequency}
         >
@@ -601,7 +601,7 @@ export default function UsualRoutinePage() {
         {showsBreakfastPlanChangeActions(values) ? (
           <QuestionBlock
             ref={registerBlock("breakfastPlanChangeActions")}
-            title="When that happens, what do you usually do?"
+            title="When your plan changes after the cancellation deadline, what do you usually do?"
             helperText="Select all that apply."
             required
             error={errors.breakfastPlanChangeActions}
@@ -659,7 +659,7 @@ export default function UsualRoutinePage() {
 
         <QuestionBlock
           ref={registerBlock("breakfastFrequency")}
-          title="In a typical week, how often do you usually eat breakfast at the mess?"
+          title="In a typical week, how often do you eat breakfast at the mess?"
           required
           error={errors.breakfastFrequency}
         >
