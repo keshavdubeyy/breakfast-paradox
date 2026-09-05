@@ -12,20 +12,6 @@ import {
 } from "@/lib/archetype-content"
 import type { Confidence } from "@/lib/archetype-scoring"
 
-// The five archetypes with final copy + art. The scoring engine can still
-// return a sixth ("meal-maximizer") — see the note below — so it's kept
-// selectable here too, clearly labeled, rather than hidden.
-const FINISHED_ARCHETYPE_IDS: ArchetypeId[] = [
-  "routine-keeper",
-  "sleep-saver",
-  "schedule-juggler",
-  "flexible-switcher",
-  "alternative-forager",
-]
-const UNFINISHED_ARCHETYPE_IDS = ARCHETYPE_IDS.filter(
-  (id) => !FINISHED_ARCHETYPE_IDS.includes(id)
-)
-
 function ControlGroup({
   label,
   children,
@@ -43,8 +29,7 @@ function ControlGroup({
 
 /**
  * Development-only preview of the real ResultPage component — not a
- * separate/fake UI. Lets you click through all five finished archetypes
- * (plus the still-unfinished "meal-maximizer", clearly labeled), strong
+ * separate/fake UI. Lets you click through all six archetypes, strong
  * vs. mixed confidence, and population data available vs. unavailable.
  * There's no visual-variant control — each archetype always renders its
  * one fixed illustration, regardless of gender. Intentionally not linked
@@ -52,7 +37,7 @@ function ControlGroup({
  */
 export default function DevArchetypeResultsPage() {
   const [archetypeId, setArchetypeId] = useState<ArchetypeId>(
-    FINISHED_ARCHETYPE_IDS[0]
+    ARCHETYPE_IDS[0]
   )
   const [confidence, setConfidence] = useState<Confidence>("strong")
   const [populationAvailable, setPopulationAvailable] = useState(false)
@@ -68,13 +53,9 @@ export default function DevArchetypeResultsPage() {
     )
   }
 
-  const finishedIndex = FINISHED_ARCHETYPE_IDS.indexOf(archetypeId)
+  const archetypeIndex = ARCHETYPE_IDS.indexOf(archetypeId)
   const secondaryArchetypeId =
-    finishedIndex === -1
-      ? FINISHED_ARCHETYPE_IDS[0]
-      : FINISHED_ARCHETYPE_IDS[
-          (finishedIndex + 1) % FINISHED_ARCHETYPE_IDS.length
-        ]
+    ARCHETYPE_IDS[(archetypeIndex + 1) % ARCHETYPE_IDS.length]
 
   return (
     <div className="flex min-h-svh flex-col gap-6 bg-background">
@@ -91,7 +72,7 @@ export default function DevArchetypeResultsPage() {
         </div>
 
         <ControlGroup label="Primary archetype">
-          {FINISHED_ARCHETYPE_IDS.map((id) => (
+          {ARCHETYPE_IDS.map((id) => (
             <Button
               key={id}
               type="button"
@@ -100,17 +81,6 @@ export default function DevArchetypeResultsPage() {
               onClick={() => setArchetypeId(id)}
             >
               {ARCHETYPES[id].name}
-            </Button>
-          ))}
-          {UNFINISHED_ARCHETYPE_IDS.map((id) => (
-            <Button
-              key={id}
-              type="button"
-              size="sm"
-              variant={archetypeId === id ? "default" : "outline"}
-              onClick={() => setArchetypeId(id)}
-            >
-              {ARCHETYPES[id].name} (no final art yet)
             </Button>
           ))}
         </ControlGroup>

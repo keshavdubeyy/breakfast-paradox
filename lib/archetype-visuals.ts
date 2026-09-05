@@ -13,20 +13,17 @@ import type { ArchetypeId } from "./archetype-content"
 // necessary," they're referenced here exactly as uploaded rather than
 // moved or renamed to match a folder/naming convention.
 //
-// meal-maximizer has no final art yet — the scoring engine can still
-// return it as a result (see the archetype-count mismatch noted
-// elsewhere in the project history), so it maps to a conventionally
-// named file that doesn't exist on disk. ArchetypeIllustration already
-// falls back to a neutral placeholder on a failed image load, so this
-// can't break the result page — it just shows the placeholder until real
-// art and copy exist for it.
+// All six archetypes now have final art. ArchetypeIllustration still
+// falls back to a neutral placeholder on a failed image load, so a
+// missing/renamed file in the future degrades gracefully rather than
+// breaking the result page.
 export const ARCHETYPE_VISUALS: Record<ArchetypeId, string> = {
   "routine-keeper": "/routine-keeper.png",
   "sleep-saver": "/Sleep Saver.png",
   "schedule-juggler": "/Schedule Juggler.png",
   "flexible-switcher": "/Flexible Switcher.png",
   "alternative-forager": "/Alternative Forager.png",
-  "meal-maximizer": "/archetypes/meal-maximizer.png",
+  "meal-maximizer": "/meal-maximizer.png",
 }
 
 /** The single lookup every consumer should use — always keyed by the

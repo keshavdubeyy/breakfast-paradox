@@ -10,14 +10,9 @@ describe("archetype → single illustration mapping", () => {
     ["schedule-juggler", "/Schedule Juggler.png"],
     ["flexible-switcher", "/Flexible Switcher.png"],
     ["alternative-forager", "/Alternative Forager.png"],
+    ["meal-maximizer", "/meal-maximizer.png"],
   ] as const)("%s → %s", (id, expected) => {
     expect(getArchetypeVisualSrc(id)).toBe(expected)
-  })
-
-  it("meal-maximizer (no final art yet) maps to a conventional but non-existent path, never throwing", () => {
-    expect(getArchetypeVisualSrc("meal-maximizer")).toBe(
-      "/archetypes/meal-maximizer.png"
-    )
   })
 
   it("every archetype id resolves to exactly one string path (no per-variant branching)", () => {
