@@ -1,3 +1,5 @@
+import type { PersistedArchetypeResult } from "./archetype-scoring"
+
 export interface AboutYouAnswers {
   program: string
   programOther: string
@@ -109,6 +111,10 @@ export interface SurveyState {
   aboutYou: AboutYouAnswers
   usualRoutine: UsualRoutineAnswers
   afterMorningRoutine: AfterMorningRoutineAnswers
+  // Computed exactly once, at successful submission (see the After Your
+  // Morning Routine page's Continue handler) — never recomputed by the
+  // result page. Null until that submission happens.
+  archetypeResult: PersistedArchetypeResult | null
 }
 
 export const defaultAboutYouAnswers: AboutYouAnswers = {
@@ -208,10 +214,107 @@ export const defaultAfterMorningRoutineAnswers: AfterMorningRoutineAnswers = {
   mealValuePerception: "",
 }
 
+// --- Clearing stale branch data on a branch switch ------------------------
+//
+// Q7 (breakfastFrequency) decides which of Branch A/B/C's fields get
+// asked next on the Breakfast Routine page. Going back and changing that
+// answer switches which branch is shown, but doesn't by itself erase
+// whatever was typed into the branch no longer active — that's exactly
+// what clearInactiveBreakfastBranchFields is for, called whenever
+// breakfastFrequency changes (see app/usual-routine/page.tsx).
+//
+// Scoring already ignores an inactive branch's fields regardless (every
+// formula gates on the CURRENT breakfastFrequency, never on whether a
+// field happens to be non-empty) — this is about keeping the stored
+// data itself clean, not about correctness of the archetype result.
+
+type BreakfastBranch = "A" | "B" | "C" | null
+
+function getBreakfastBranch(breakfastFrequency: string): BreakfastBranch {
+  if (
+    breakfastFrequency === "almost-every-day" ||
+    breakfastFrequency === "most-days"
+  ) {
+    return "A"
+  }
+  if (breakfastFrequency === "some-days") {
+    return "B"
+  }
+  if (breakfastFrequency === "rarely" || breakfastFrequency === "never") {
+    return "C"
+  }
+  return null
+}
+
+const BRANCH_A_DEFAULTS: Partial<UsualRoutineAnswers> = {
+  messBreakfastTime: "",
+  breakfastMoment: "",
+  breakfastMomentOther: "",
+  breakfastRoutineDuration: "",
+  earlyClassRoutineChange: "",
+  earlyClassRoutineChangeActions: [],
+  earlyClassRoutineChangeActionOther: "",
+  missedBreakfastFrequency: "",
+  missedBreakfastReasons: [],
+  missedBreakfastReasonOther: "",
+  unwantedMessActions: [],
+  unwantedMessActionOther: "",
+  messConsistency: "",
+  messChangeDeterminants: [],
+  messChangeDeterminantOther: "",
+  breakfastRoutineDescription: "",
+  breakfastRoutineDescriptionOther: "",
+}
+
+const BRANCH_B_DEFAULTS: Partial<UsualRoutineAnswers> = {
+  conditionalMessBreakfastTime: "",
+  breakfastDecisionPoint: "",
+  breakfastDayDifferentiators: [],
+  breakfastDayDifferentiatorOther: "",
+  breakfastPlannedButSkippedFrequency: "",
+  breakfastUnplannedButWentFrequency: "",
+  breakfastPlanChangeReasons: [],
+  breakfastPlanChangeReasonOther: "",
+}
+
+const BRANCH_C_DEFAULTS: Partial<UsualRoutineAnswers> = {
+  breakfastServedTimeActivity: "",
+  breakfastServedTimeActivityOther: "",
+  breakfastAbsenceReason: "",
+  breakfastAbsenceDecisionPoint: "",
+  occasionalBreakfastFrequency: "",
+  occasionalBreakfastDifferentiators: [],
+  occasionalBreakfastDifferentiatorOther: "",
+  unusedAllottedMealActions: [],
+  unusedAllottedMealActionOther: "",
+  breakfastFrequencyChanged: "",
+  breakfastFrequencyChangeDescription: "",
+}
+
+/**
+ * Returns `values` with every branch's fields reset to their defaults
+ * EXCEPT the branch that `values.breakfastFrequency` currently selects.
+ * Shared fields (breakfastMotivationFactors and everything outside the
+ * three branch sections) are left untouched — they aren't specific to
+ * any one branch.
+ */
+export function clearInactiveBreakfastBranchFields(
+  values: UsualRoutineAnswers
+): UsualRoutineAnswers {
+  const branch = getBreakfastBranch(values.breakfastFrequency)
+  return {
+    ...values,
+    ...(branch !== "A" ? BRANCH_A_DEFAULTS : null),
+    ...(branch !== "B" ? BRANCH_B_DEFAULTS : null),
+    ...(branch !== "C" ? BRANCH_C_DEFAULTS : null),
+  }
+}
+
 const defaultSurveyState: SurveyState = {
   aboutYou: defaultAboutYouAnswers,
   usualRoutine: defaultUsualRoutineAnswers,
   afterMorningRoutine: defaultAfterMorningRoutineAnswers,
+  archetypeResult: null,
 }
 
 const STORAGE_KEY = "breakfast-paradox:survey-state"
@@ -237,6 +340,7 @@ function readSurveyState(): SurveyState {
         ...defaultAfterMorningRoutineAnswers,
         ...parsed.afterMorningRoutine,
       },
+      archetypeResult: parsed.archetypeResult ?? null,
     }
   } catch {
     return defaultSurveyState
@@ -266,6 +370,10 @@ export function getUsualRoutineAnswers(): UsualRoutineAnswers {
 
 export function getAfterMorningRoutineAnswers(): AfterMorningRoutineAnswers {
   return readSurveyState().afterMorningRoutine
+}
+
+export function getArchetypeResult(): PersistedArchetypeResult | null {
+  return readSurveyState().archetypeResult
 }
 
 // --- useSyncExternalStore wiring -------------------------------------
@@ -391,5 +499,45 @@ export function saveAfterMorningRoutineAnswers(
   writeSurveyState({ ...readSurveyState(), afterMorningRoutine: answers })
   cachedRawAfterMorningRoutine = window.sessionStorage.getItem(STORAGE_KEY)
   cachedSnapshotAfterMorningRoutine = answers
+  listeners.forEach((listener) => listener())
+}
+
+let cachedRawArchetypeResult: string | null = null
+let cachedSnapshotArchetypeResult: PersistedArchetypeResult | null = null
+
+function readCachedArchetypeResultSnapshot(): PersistedArchetypeResult | null {
+  const raw = window.sessionStorage.getItem(STORAGE_KEY)
+  if (raw !== cachedRawArchetypeResult) {
+    cachedRawArchetypeResult = raw
+    cachedSnapshotArchetypeResult = readSurveyState().archetypeResult
+  }
+  return cachedSnapshotArchetypeResult
+}
+
+export function subscribeArchetypeResult(listener: Listener) {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+export function getArchetypeResultSnapshot(): PersistedArchetypeResult | null {
+  if (typeof window === "undefined") {
+    return null
+  }
+  return readCachedArchetypeResultSnapshot()
+}
+
+export function getArchetypeResultServerSnapshot(): PersistedArchetypeResult | null {
+  return null
+}
+
+/**
+ * Called exactly once, at successful survey submission — see the Continue
+ * handler on the After Your Morning Routine page. The result page reads
+ * this saved value; it must never call calculateArchetypeResult itself.
+ */
+export function saveArchetypeResult(result: PersistedArchetypeResult) {
+  writeSurveyState({ ...readSurveyState(), archetypeResult: result })
+  cachedRawArchetypeResult = window.sessionStorage.getItem(STORAGE_KEY)
+  cachedSnapshotArchetypeResult = result
   listeners.forEach((listener) => listener())
 }

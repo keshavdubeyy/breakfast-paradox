@@ -2,6 +2,9 @@
 // buzz. Not a state indicator: the UI must read identically without it.
 const ERROR_PATTERN_MS = 15
 
+// Even lighter — a per-step "detent" tick for a slider, not an alert.
+const TICK_PATTERN_MS = 5
+
 function canVibrate(): boolean {
   return typeof navigator !== "undefined" && typeof navigator.vibrate === "function"
 }
@@ -23,4 +26,18 @@ function vibrateError() {
   navigator.vibrate(ERROR_PATTERN_MS)
 }
 
-export { vibrateError }
+/**
+ * Fires a very light tick — meant for a slider crossing one discrete step,
+ * so dragging/stepping through values has some tactile feedback. Call this
+ * only when the step actually changes, not on every drag event, or it'll
+ * feel like a continuous buzz instead of distinct detents.
+ */
+function vibrateTick() {
+  if (!canVibrate()) {
+    return
+  }
+
+  navigator.vibrate(TICK_PATTERN_MS)
+}
+
+export { vibrateError, vibrateTick }

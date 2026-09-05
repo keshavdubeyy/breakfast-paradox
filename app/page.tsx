@@ -27,6 +27,7 @@ export default function ConsentPage() {
           </Button>
           <Button
             variant="ghost"
+            nativeButton={false}
             className="mx-auto h-11 text-muted-foreground"
             render={<Link href="/exit" />}
           >

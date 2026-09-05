@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 import {
+  clearInactiveBreakfastBranchFields,
   getUsualRoutineServerSnapshot,
   getUsualRoutineSnapshot,
   saveUsualRoutineAnswers,
@@ -270,6 +271,19 @@ export default function UsualRoutinePage() {
         : values.breakfastResaleSuccessRate,
     })
     advance("breakfastPlanChangeFrequency")
+  }
+
+  function updateBreakfastFrequency(value: string) {
+    // Switching which branch (A/B/C) this answer selects must not leave
+    // a previously-answered branch's fields sitting around stale — see
+    // clearInactiveBreakfastBranchFields for why.
+    saveUsualRoutineAnswers(
+      clearInactiveBreakfastBranchFields({
+        ...values,
+        breakfastFrequency: value,
+      })
+    )
+    advance("breakfastFrequency")
   }
 
   function updateBreakfastPlanChangeActions(value: string, checked: boolean) {
@@ -765,10 +779,9 @@ export default function UsualRoutinePage() {
               aria-describedby={describedBy}
               aria-invalid={!!errors.breakfastFrequency}
               value={values.breakfastFrequency}
-              onValueChange={(value) => {
-                updateField("breakfastFrequency", value as string)
-                advance("breakfastFrequency")
-              }}
+              onValueChange={(value) =>
+                updateBreakfastFrequency(value as string)
+              }
               className="gap-0"
             >
               {BREAKFAST_FREQUENCY_OPTIONS.map((option) => (

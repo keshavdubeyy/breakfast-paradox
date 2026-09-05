@@ -7,8 +7,15 @@ import Link from "next/link"
 import { SurveyLayout } from "@/components/survey/survey-layout"
 import { QuestionBlock } from "@/components/survey/question-block"
 import { ScaleGrid } from "@/components/survey/scale-grid"
+import { ErrorSummary } from "@/components/survey/error-summary"
 import { useAutoAdvance } from "@/hooks/use-auto-advance"
 import { vibrateError } from "@/lib/haptics"
+import {
+  ARCHETYPE_ENGINE_VERSION,
+  calculateArchetypeResult,
+  toPersistedArchetypeResult,
+} from "@/lib/archetypes"
+import { submitSurveyResponse } from "@/lib/survey-submission"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,11 +24,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 
 import {
+  getAboutYouAnswers,
   getAfterMorningRoutineServerSnapshot,
   getAfterMorningRoutineSnapshot,
   getUsualRoutineServerSnapshot,
   getUsualRoutineSnapshot,
   saveAfterMorningRoutineAnswers,
+  saveArchetypeResult,
   subscribeAfterMorningRoutine,
   subscribeUsualRoutine,
   type AfterMorningRoutineAnswers,
@@ -167,6 +176,46 @@ const FIELD_ORDER: RequiredFieldKey[] = [
   "breakfastImprovementOptions",
   "breakfastSystemChangeSuggestion",
 ]
+
+// Question titles, kept alongside FIELD_ORDER for the error summary — the
+// alert that lists every unanswered question at once when Continue fails,
+// not just the first one.
+const QUESTION_TITLES: Record<RequiredFieldKey, string> = {
+  nonBreakfastMealSource:
+    "On days when you don’t eat breakfast at the mess, what do you usually do before lunch?",
+  nextFoodTime:
+    "Around what time do you usually have your next food or drink other than water?",
+  earlyCommitmentBreakfastFrequency:
+    "On days when you have a class, lab, meeting, or other mandatory activity before 9:00 AM, how often do you eat breakfast at the mess?",
+  noEarlyCommitmentBreakfastFrequency:
+    "On days when you do not have a mandatory activity before 9:00 AM, how often do you eat breakfast at the mess?",
+  weekendBreakfastComparison:
+    "Compared with weekdays, how often do you eat breakfast at the mess on weekends?",
+  weekendDifferentiators: "What is usually different about your weekends?",
+  nonBreakfastSpendingFrequency:
+    "On days when you don't eat breakfast at the mess, how often do you spend money on food or drinks before lunch?",
+  nonBreakfastSpendingAmount:
+    "Approximately how much do you usually spend before lunch on those days?",
+  semesterBreakfastChange:
+    "Compared with the beginning of this semester, has how often you eat breakfast at the mess changed?",
+  semesterBreakfastChangeDescription: "What changed around the same time?",
+  comparisonRatings:
+    "Compared with days when you eat breakfast at the mess, how do you usually feel before lunch on days when you don’t?",
+  previousNightAffectsBreakfast:
+    "Does what happened the previous night or earlier in the day usually affect whether you have breakfast the next morning?",
+  previousNightFactors: "What usually affects that decision?",
+  influenceRatings:
+    "How much do the following usually affect whether you eat breakfast at the mess?",
+  biggestInfluenceFactor:
+    "Of the factors above, which one usually has the biggest influence on whether you eat breakfast at the mess?",
+  mealValuePerception:
+    "Thinking about how often you actually use your registered/allotted breakfast, how do you feel about what you pay for it?",
+  agreementRatings: "How much do you agree with the following statements?",
+  breakfastImprovementOptions:
+    "Which of the following would make it easier for you to have breakfast at the mess more regularly?",
+  breakfastSystemChangeSuggestion:
+    "If you could change one thing about the current breakfast system, what would you change and why?",
+}
 
 function validate(
   values: AfterMorningRoutineAnswers,
@@ -319,6 +368,21 @@ export default function AfterMorningRoutinePage() {
     [submitted, values, usualRoutineValues]
   )
 
+  const errorSummaryItems = useMemo(
+    () =>
+      FIELD_ORDER.filter((key) => errors[key]).map((key) => ({
+        key,
+        title: QUESTION_TITLES[key],
+      })),
+    [errors]
+  )
+
+  function jumpToField(key: string) {
+    const node = getBlock(key as RequiredFieldKey)
+    node?.focus()
+    node?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
+
   function updateField<K extends keyof AfterMorningRoutineAnswers>(
     key: K,
     value: AfterMorningRoutineAnswers[K]
@@ -443,6 +507,27 @@ export default function AfterMorningRoutinePage() {
       return
     }
 
+    // The archetype is calculated exactly once, right here at successful
+    // submission, and persisted — the result page reads this saved value
+    // rather than recalculating on render, so it can never change on a
+    // refresh (or if the formulas are revised later).
+    const archetypeResult = calculateArchetypeResult({
+      usualRoutine: usualRoutineValues,
+      afterMorningRoutine: values,
+    })
+    const persistedResult = toPersistedArchetypeResult(archetypeResult)
+    saveArchetypeResult(persistedResult)
+
+    // Best-effort: a Supabase outage or missing env vars must never stop
+    // the respondent from reaching their (already locally-saved) result.
+    void submitSurveyResponse({
+      surveyVersion: ARCHETYPE_ENGINE_VERSION,
+      aboutYou: getAboutYouAnswers(),
+      usualRoutine: usualRoutineValues,
+      afterMorningRoutine: values,
+      archetypeResult: persistedResult,
+    })
+
     router.push("/exit")
   }
 
@@ -455,23 +540,26 @@ export default function AfterMorningRoutinePage() {
     <SurveyLayout
       progress={getSurveySectionProgress("after-morning-routine")}
       footer={
-        <div className="flex flex-row gap-3">
-          <Button
-            variant="outline"
-            nativeButton={false}
-            className="min-h-11 flex-1 text-base"
-            render={<Link href="/breakfast-routine" />}
-          >
-            Back
-          </Button>
-          <Button
-            type="button"
-            className="min-h-11 flex-1 text-base"
-            onClick={handleContinue}
-          >
-            Continue
-          </Button>
-        </div>
+        <>
+          <ErrorSummary items={errorSummaryItems} onJumpTo={jumpToField} />
+          <div className="flex flex-row gap-3">
+            <Button
+              variant="outline"
+              nativeButton={false}
+              className="min-h-11 flex-1 text-base"
+              render={<Link href="/breakfast-routine" />}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              className="min-h-11 flex-1 text-base"
+              onClick={handleContinue}
+            >
+              Continue
+            </Button>
+          </div>
+        </>
       }
     >
       <div className="flex flex-col gap-8">

@@ -1,7 +1,8 @@
 "use client"
 
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Slider as SliderPrimitive } from "@base-ui/react/slider"
+import { vibrateTick } from "@/lib/haptics"
+import { cn } from "@/lib/utils"
 import type { ScaleRowItem, SurveyOption } from "@/lib/survey-options"
 
 interface ScaleGridProps {
@@ -14,10 +15,19 @@ interface ScaleGridProps {
 }
 
 /**
- * A Likert-style grid: one row per statement/factor, one column per scale
- * point. Used for the before/after comparison (Q4), the influence ratings
- * (Q7), and the agreement statements (Q9) — each with a different scale and
- * row set, so both are passed in rather than hardcoded.
+ * A Likert-style rating list, one slider per statement/factor. Discrete
+ * steps map 1:1 to `scaleOptions` (index 0..length-1) — this reads as a
+ * compact single-row control at any width, unlike a row of labeled pills
+ * which wraps unpredictably once there are 5-6 scale points.
+ *
+ * A row with no answer yet renders dimmed, sitting at step 0, rather than
+ * with no thumb at all (sliders can't represent "empty"). The row is only
+ * considered answered — and `onChange` only fires — once the user actually
+ * interacts with it, so `values[row.key]` stays "" (and required-field
+ * validation stays accurate) until then. A plain click that lands exactly
+ * on step 0 wouldn't otherwise change the controlled value and so wouldn't
+ * fire Base UI's onValueChange — the pointerdown handler below covers that
+ * one case explicitly.
  */
 function ScaleGrid({
   idPrefix,
@@ -27,62 +37,113 @@ function ScaleGrid({
   onChange,
   invalidRowKeys,
 }: ScaleGridProps) {
-  const gridTemplateColumns = `minmax(0,1fr) repeat(${scaleOptions.length}, minmax(2.75rem, 1fr))`
-  const minWidth = `${14 + scaleOptions.length * 3.25}rem`
+  const maxIndex = scaleOptions.length - 1
 
   return (
-    <div className="min-w-0 overflow-x-auto">
-      <div className="flex flex-col gap-0" style={{ minWidth }}>
-        <div
-          className="grid gap-1 pb-2"
-          style={{ gridTemplateColumns }}
-        >
-          <span aria-hidden="true" />
-          {scaleOptions.map((option) => (
-            <span
-              key={option.value}
-              className="px-0.5 text-center text-[0.6875rem] leading-tight text-balance text-muted-foreground"
-            >
-              {option.label}
-            </span>
-          ))}
-        </div>
+    <div className="flex flex-col gap-1">
+      {rows.map((row) => {
+        const isInvalid = invalidRowKeys?.includes(row.key) ?? false
+        const answeredIndex = scaleOptions.findIndex(
+          (option) => option.value === values[row.key]
+        )
+        const isAnswered = answeredIndex !== -1
+        const sliderIndex = isAnswered ? answeredIndex : 0
 
-        {rows.map((row) => (
-          <RadioGroup
+        const commit = (index: number) => {
+          const clamped = Math.min(Math.max(index, 0), maxIndex)
+          if (clamped !== sliderIndex) {
+            vibrateTick()
+          }
+          onChange(row.key, scaleOptions[clamped].value)
+        }
+
+        return (
+          <div
             key={row.key}
-            value={values[row.key] ?? ""}
-            onValueChange={(value) => onChange(row.key, value as string)}
-            aria-label={row.label}
-            aria-invalid={invalidRowKeys?.includes(row.key)}
-            className="grid items-center gap-1 border-t border-border/50 py-2.5"
-            style={{ gridTemplateColumns }}
+            className={cn(
+              "flex flex-col gap-3 rounded-2xl border border-transparent p-3",
+              isInvalid && "border-destructive/40 bg-destructive/5"
+            )}
           >
-            <span className="pr-2 text-sm text-foreground">
-              {row.label}
-              {row.helperText ? (
-                <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                  {row.helperText}
+            <div className="flex items-start justify-between gap-3">
+              <span className="flex items-start gap-1.5 text-sm font-medium text-foreground">
+                {isInvalid ? (
+                  <span
+                    aria-hidden="true"
+                    className="mt-1.5 size-1.5 shrink-0 rounded-full bg-destructive"
+                  />
+                ) : null}
+                <span>
+                  {row.label}
+                  {row.helperText ? (
+                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                      {row.helperText}
+                    </span>
+                  ) : null}
                 </span>
-              ) : null}
-            </span>
-            {scaleOptions.map((option) => (
-              <div key={option.value} className="flex justify-center">
-                <Label
-                  htmlFor={`${idPrefix}-${row.key}-${option.value}`}
-                  className="sr-only"
+              </span>
+              <span
+                className={cn(
+                  "shrink-0 text-right text-sm font-medium",
+                  isAnswered ? "text-foreground" : "text-muted-foreground"
+                )}
+              >
+                {isAnswered ? scaleOptions[answeredIndex].label : "Tap to rate"}
+              </span>
+            </div>
+
+            <div
+              onPointerDownCapture={() => {
+                if (!isAnswered) commit(0)
+              }}
+            >
+              <SliderPrimitive.Root
+                value={[sliderIndex]}
+                onValueChange={(value) =>
+                  commit(Array.isArray(value) ? value[0] : value)
+                }
+                min={0}
+                max={maxIndex}
+                step={1}
+                aria-invalid={isInvalid}
+                thumbAlignment="edge"
+                className="w-full"
+              >
+                <SliderPrimitive.Control
+                  className={cn(
+                    "relative flex w-full touch-none items-center py-1.5 select-none",
+                    !isAnswered && "opacity-40"
+                  )}
                 >
-                  {row.label}: {option.label}
-                </Label>
-                <RadioGroupItem
-                  id={`${idPrefix}-${row.key}-${option.value}`}
-                  value={option.value}
-                />
-              </div>
-            ))}
-          </RadioGroup>
-        ))}
-      </div>
+                  <SliderPrimitive.Track
+                    data-slot="slider-track"
+                    className="relative h-3 w-full grow overflow-hidden rounded-4xl bg-muted select-none"
+                  >
+                    <SliderPrimitive.Indicator
+                      data-slot="slider-range"
+                      className="h-full bg-primary transition-[width] duration-150 ease-out select-none"
+                    />
+                  </SliderPrimitive.Track>
+                  <SliderPrimitive.Thumb
+                    data-slot="slider-thumb"
+                    id={`${idPrefix}-${row.key}`}
+                    getAriaLabel={() => row.label}
+                    getAriaValueText={() =>
+                      isAnswered ? scaleOptions[sliderIndex].label : "Not yet rated"
+                    }
+                    className="block size-5 shrink-0 rounded-4xl border border-primary bg-white shadow-sm ring-ring/50 transition-all duration-150 ease-out select-none hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden"
+                  />
+                </SliderPrimitive.Control>
+              </SliderPrimitive.Root>
+            </div>
+
+            <div className="flex justify-between text-[0.6875rem] text-muted-foreground">
+              <span>{scaleOptions[0].label}</span>
+              <span className="text-right">{scaleOptions[maxIndex].label}</span>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
