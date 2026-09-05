@@ -507,7 +507,7 @@ export function computeEventsMetrics(rows: AnalyticsRow[]): EventsMetrics {
       unusedAllottedMealActionsDenominatorCount: branchC.length,
     },
 
-    nonBreakfastMealSourceDistribution: buildOrderedDistribution(
+    nonBreakfastMealSourceDistribution: buildMultiSelectDistribution(
       rows,
       (row) => row.nonBreakfastMealSource,
       NON_BREAKFAST_MEAL_SOURCE_OPTIONS

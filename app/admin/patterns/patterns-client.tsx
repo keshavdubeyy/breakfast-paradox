@@ -1,10 +1,16 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { FilterIcon } from "@hugeicons/core-free-icons"
 
 import { BranchDeepDiveView } from "@/components/admin/branch-deep-dive-view"
+import { CenteredDotPlot, type DotPlotRowData } from "@/components/admin/charts/centered-dot-plot"
+import { DataDetailsDrawer } from "@/components/admin/charts/data-details-drawer"
+import { DivergingCompositionBar } from "@/components/admin/charts/diverging-composition-bar"
+import { HeatmapMatrix, type HeatmapColumnDef, type HeatmapRowData } from "@/components/admin/charts/heatmap-matrix"
+import { BRANCH_SEGMENTS, categoricalColorVar } from "@/components/admin/charts/palette"
+import { StackedPercentageBar, type StackedBarRowData } from "@/components/admin/charts/stacked-percentage-bar"
 import { countActiveFilters, FiltersForm } from "@/components/admin/filters-form"
 import { LikertMatrixTable } from "@/components/admin/likert-matrix-table"
 import { QualitativeEvidenceDrawer } from "@/components/admin/qualitative-evidence-drawer"
@@ -39,7 +45,9 @@ import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
@@ -64,15 +72,21 @@ import {
 import { applyFilters } from "@/lib/analytics/filters"
 import { computeBranchDeepDive } from "@/lib/analytics/patterns/branch-deep-dive"
 import {
+  likertMatrixToDotRows,
+  likertMatrixToHeatmapRows,
+  rowPercentageTableToBars,
+} from "@/lib/analytics/patterns/display"
+import {
   analyzeRelationship,
   analyzeRelationshipBySegment,
   EXPLORER_FIELDS,
   getExplorerField,
+  type ExplorerFieldMeta,
   type ExplorerResult,
   type ExplorerSegmentResult,
 } from "@/lib/analytics/patterns/explorer"
 import { computePatternsMetrics } from "@/lib/analytics/patterns/metrics"
-import { BRANCH_LABELS, BRANCHES } from "@/lib/analytics/patterns/normalization"
+import { BRANCH_LABELS, BRANCHES, COMPARISON_ROW_ITEMS } from "@/lib/analytics/patterns/normalization"
 import { sampleFlag, type SampleFlag, type SpearmanResult } from "@/lib/analytics/patterns/types"
 import {
   DEFAULT_FILTERS,
@@ -82,13 +96,18 @@ import {
 
 const NO_SEGMENT = "__none__"
 
+const BRANCH_COLUMNS: HeatmapColumnDef[] = BRANCHES.map((branch) => ({
+  key: branch,
+  label: BRANCH_LABELS[branch],
+}))
+
 /** Reusable strip for "does this universal field vary by branch" —
  * dispatches through the same validated Explorer logic as a manual
  * Explorer query, just pre-wired to specific fields instead of requiring
  * an admin to pick them from the X/Y selects. */
 function FieldByBranchList({ rows, fieldKeys }: { rows: AnalyticsRow[]; fieldKeys: string[] }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {fieldKeys.map((key) => {
         const field = getExplorerField(key)
         const result = analyzeRelationship(rows, key, "branch")
@@ -125,9 +144,9 @@ function SpearmanNote({ association, n }: { association: SpearmanResult | null; 
     <p className="text-xs text-muted-foreground">
       Spearman ρ = {association.rho.toFixed(2)} ({association.strength}, n ={" "}
       {association.n})
-      <SampleFlagBadge flag={sampleFlag(association.n)} /> — association, not
-      causation. Excludes “no consistent time” from the ordinal calculation
-      (it still appears as its own row above).
+      <SampleFlagBadge flag={sampleFlag(association.n)} /> — excludes
+      &quot;no consistent time&quot; from this calculation (it still appears
+      as its own row above).
     </p>
   )
 }
@@ -205,6 +224,13 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
 
   const { summaryCards } = metrics
 
+  const earlyCommitmentBars = rowPercentageTableToBars(metrics.earlyCommitmentsByBranch)
+  const sleepBars = rowPercentageTableToBars(metrics.sleepByBranch)
+  const wakeBars = rowPercentageTableToBars(metrics.wakeByBranch)
+  const influenceHeatmapRows = likertMatrixToHeatmapRows(metrics.influenceMatrix)
+  const agreementHeatmapRows = likertMatrixToHeatmapRows(metrics.agreementMatrix)
+  const outcomeDotRows = likertMatrixToDotRows(metrics.outcomeMatrix)
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       {isSampleData ? (
@@ -223,7 +249,7 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
           <p className="text-sm text-muted-foreground">
             Events tells us what is happening. Patterns tells us what
             repeatedly changes together, across students, situations, and
-            time — associations, never causation.
+            time.
           </p>
         </div>
 
@@ -287,6 +313,12 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
         </div>
       </div>
 
+      <p className="rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        These views show associations in self-reported survey data. They do
+        not establish causation — a local note only repeats this where a
+        result is unusually sparse or easy to misread.
+      </p>
+
       <QualitativeEvidenceDrawer
         open={qualitativeDrawerOpen}
         onOpenChange={setQualitativeDrawerOpen}
@@ -297,25 +329,31 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCardView
           title="Early-commitment gap"
+          methodology="Within-person comparison"
           card={summaryCards.earlyCommitmentGap}
           formatter={formatPercentage}
         />
         <SummaryCardView
           title="Late-sleep breakfast gap"
+          methodology="Between-group comparison"
           card={summaryCards.lateSleepGap}
           formatter={formatSignedPercentagePoints}
         />
         <SummaryCardView
           title="Weekend shift"
+          methodology="Whole-sample composition"
           card={summaryCards.weekendShift}
           formatter={formatPercentage}
         />
         <SummaryCardView
           title="Semester change"
+          methodology="Whole-sample composition"
           card={summaryCards.semesterChange}
           formatter={formatPercentage}
         />
       </div>
+
+      <SectionHeading>Core patterns</SectionHeading>
 
       {/* --- Core Pattern 1 --- */}
       <Card>
@@ -323,14 +361,22 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
           <CardTitle>Early commitments × breakfast behaviour</CardTitle>
           <CardDescription>
             As early-commitment days per week rise, how does the breakfast
-            group distribution change? Each row totals ~100%.
+            group composition shift? Each row totals ~100%.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <RowPercentageTableView
-            table={metrics.earlyCommitmentsByBranch}
+        <CardContent className="flex flex-col gap-3">
+          <StackedPercentageBar
+            rows={earlyCommitmentBars}
+            segments={BRANCH_SEGMENTS}
             rowHeaderLabel="Early-commitment days"
+            footnote={`n = ${metrics.earlyCommitmentsByBranch.eligibility.eligible} eligible · ${metrics.earlyCommitmentsByBranch.eligibility.answered} answered · ${metrics.earlyCommitmentsByBranch.eligibility.missing} missing`}
           />
+          <DataDetailsDrawer>
+            <RowPercentageTableView
+              table={metrics.earlyCommitmentsByBranch}
+              rowHeaderLabel="Early-commitment days"
+            />
+          </DataDetailsDrawer>
         </CardContent>
       </Card>
 
@@ -344,48 +390,18 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          {(() => {
-            const flag = sampleFlag(metrics.pairedEarlyVsNonEarly.eligibility.answered)
-            if (!shouldShowValue(flag)) {
-              return (
-                <p className="text-sm text-muted-foreground">
-                  {suppressedNote(metrics.pairedEarlyVsNonEarly.eligibility.answered)}
-                </p>
-              )
-            }
-            return (
-              <>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <PairedStat
-                    label="Breakfast less often on early days"
-                    value={metrics.pairedEarlyVsNonEarly.lowerOnFirstPercentage}
-                  />
-                  <PairedStat
-                    label="No difference"
-                    value={metrics.pairedEarlyVsNonEarly.samePercentage}
-                  />
-                  <PairedStat
-                    label="Breakfast more often on early days"
-                    value={metrics.pairedEarlyVsNonEarly.higherOnFirstPercentage}
-                  />
-                </div>
-                <p className="text-sm text-foreground">
-                  Median gap:{" "}
-                  <span className="font-medium">
-                    {metrics.pairedEarlyVsNonEarly.medianGap ?? "—"}
-                  </span>{" "}
-                  frequency levels
-                  <SampleFlagBadge flag={flag} />
-                </p>
-              </>
-            )
-          })()}
-          <p className="text-xs text-muted-foreground">
-            n = {metrics.pairedEarlyVsNonEarly.eligibility.answered} of{" "}
-            {metrics.pairedEarlyVsNonEarly.eligibility.totalFiltered} respondents
-            gave a comparable answer on both questions (excludes “not
-            applicable” and unanswered).
-          </p>
+          <DivergingCompositionBar
+            lowerLabel="Less often on early days"
+            lowerPercentage={metrics.pairedEarlyVsNonEarly.lowerOnFirstPercentage}
+            sameLabel="No difference"
+            samePercentage={metrics.pairedEarlyVsNonEarly.samePercentage}
+            higherLabel="More often on early days"
+            higherPercentage={metrics.pairedEarlyVsNonEarly.higherOnFirstPercentage}
+            n={metrics.pairedEarlyVsNonEarly.eligibility.answered}
+            flag={sampleFlag(metrics.pairedEarlyVsNonEarly.eligibility.answered)}
+            medianCaption={`Median gap: ${metrics.pairedEarlyVsNonEarly.medianGap ?? "—"} frequency levels lower on early days`}
+            footnote={`n = ${metrics.pairedEarlyVsNonEarly.eligibility.answered} of ${metrics.pairedEarlyVsNonEarly.eligibility.totalFiltered} respondents gave a comparable answer on both questions (excludes "not applicable" and unanswered).`}
+          />
         </CardContent>
       </Card>
 
@@ -393,17 +409,20 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
       <Card>
         <CardHeader>
           <CardTitle>Weekday sleep time × breakfast behaviour</CardTitle>
-          <CardDescription>Association, not causation.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <RowPercentageTableView
-            table={metrics.sleepByBranch}
+          <StackedPercentageBar
+            rows={sleepBars}
+            segments={BRANCH_SEGMENTS}
             rowHeaderLabel="Weekday sleep time"
           />
           <SpearmanNote
             association={metrics.sleepAssociation}
             n={metrics.sleepByBranch.eligibility.answered}
           />
+          <DataDetailsDrawer>
+            <RowPercentageTableView table={metrics.sleepByBranch} rowHeaderLabel="Weekday sleep time" />
+          </DataDetailsDrawer>
         </CardContent>
       </Card>
 
@@ -411,19 +430,24 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
       <Card>
         <CardHeader>
           <CardTitle>Weekday wake time × breakfast behaviour</CardTitle>
-          <CardDescription>Association, not causation.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <RowPercentageTableView
-            table={metrics.wakeByBranch}
+          <StackedPercentageBar
+            rows={wakeBars}
+            segments={BRANCH_SEGMENTS}
             rowHeaderLabel="Weekday wake time"
           />
           <SpearmanNote
             association={metrics.wakeAssociation}
             n={metrics.wakeByBranch.eligibility.answered}
           />
+          <DataDetailsDrawer>
+            <RowPercentageTableView table={metrics.wakeByBranch} rowHeaderLabel="Weekday wake time" />
+          </DataDetailsDrawer>
         </CardContent>
       </Card>
+
+      <SectionHeading>Deeper patterns</SectionHeading>
 
       {/* --- Phase 2: deeper modules, kept collapsible rather than a wall of charts --- */}
       <Accordion defaultValue={["influence-matrix"]}>
@@ -432,29 +456,38 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
           <AccordionContent>
             <p className="mb-3 text-sm text-muted-foreground">
               For each structural factor (sleep, class schedule, mess allocation,
-              distance, and more), how strongly do regular / conditional /
-              rare eaters say it influences their breakfast decisions? A large
-              gap flags a factor that plausibly relates to branch membership —
-              still an association, not proof of cause.
+              distance, and more), what share of each branch says it influences
+              their breakfast decisions &quot;a lot&quot; or &quot;very
+              strongly&quot;? Sorted by the largest cross-branch gap first.
             </p>
-            <LikertMatrixTable
-              matrix={metrics.influenceMatrix}
-              itemHeaderLabel="Structural factor"
+            <HeatmapMatrix
+              rows={influenceHeatmapRows as unknown as HeatmapRowData[]}
+              columns={BRANCH_COLUMNS}
+              rowHeaderLabel="Structural factor"
+              sortable
             />
+            <DataDetailsDrawer>
+              <LikertMatrixTable matrix={metrics.influenceMatrix} itemHeaderLabel="Structural factor" />
+            </DataDetailsDrawer>
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="agreement-matrix">
           <AccordionTrigger>Mental model × breakfast behaviour</AccordionTrigger>
           <AccordionContent>
             <p className="mb-3 text-sm text-muted-foreground">
-              For each belief statement, how strongly do respondents in each
-              branch agree? Compares what people believe about breakfast
+              For each belief statement, what share of each branch agrees or
+              strongly agrees? Compares what people believe about breakfast
               against what they actually do.
             </p>
-            <LikertMatrixTable
-              matrix={metrics.agreementMatrix}
-              itemHeaderLabel="Belief statement"
+            <HeatmapMatrix
+              rows={agreementHeatmapRows as unknown as HeatmapRowData[]}
+              columns={BRANCH_COLUMNS}
+              rowHeaderLabel="Belief statement"
+              sortable
             />
+            <DataDetailsDrawer>
+              <LikertMatrixTable matrix={metrics.agreementMatrix} itemHeaderLabel="Belief statement" />
+            </DataDetailsDrawer>
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="outcome-matrix">
@@ -462,16 +495,25 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
           <AccordionContent>
             <p className="mb-3 text-sm text-muted-foreground">
               Self-reported effects before lunch, compared across branches, on
-              a -2 (much lower than usual) to +2 (much higher) scale. Higher
-              isn&apos;t automatically &quot;better&quot; here — see each row for
-              context (e.g. more hunger isn&apos;t necessarily worse, just
-              different).
+              a -2 (much lower than usual) to +2 (much higher) scale.
             </p>
-            <LikertMatrixTable
-              matrix={metrics.outcomeMatrix}
-              itemHeaderLabel="Outcome"
-              scaleDescription="Scale: -2 (much lower than usual) to +2 (much higher)."
+            <CenteredDotPlot
+              rows={outcomeDotRows.map((row): DotPlotRowData => ({
+                ...row,
+                caption: COMPARISON_ROW_ITEMS.find((item) => item.key === row.key)?.helperText,
+              }))}
+              series={BRANCH_SEGMENTS}
+              domain={[-2, 2]}
+              centerValue={0}
+              domainLabels={["Much lower than usual", "Much higher than usual"]}
             />
+            <DataDetailsDrawer>
+              <LikertMatrixTable
+                matrix={metrics.outcomeMatrix}
+                itemHeaderLabel="Outcome"
+                scaleDescription="Scale: -2 (much lower than usual) to +2 (much higher)."
+              />
+            </DataDetailsDrawer>
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="archetype-relationships">
@@ -568,44 +610,20 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs text-muted-foreground">X variable</Label>
-              <Select
+              <GroupedFieldSelect
                 value={explorerX}
-                onValueChange={(value) => value && setExplorerX(value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue>
-                    {() => EXPLORER_FIELDS.find((f) => f.key === explorerX)?.label ?? ""}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {EXPLORER_FIELDS.filter((f) => f.allowedAsX).map((field) => (
-                    <SelectItem key={field.key} value={field.key}>
-                      {field.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={setExplorerX}
+                fields={EXPLORER_FIELDS.filter((f) => f.allowedAsX)}
+              />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs text-muted-foreground">Y variable</Label>
-              <Select
+              <GroupedFieldSelect
                 value={explorerY}
-                onValueChange={(value) => value && setExplorerY(value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue>
-                    {() => EXPLORER_FIELDS.find((f) => f.key === explorerY)?.label ?? ""}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {EXPLORER_FIELDS.filter((f) => f.allowedAsY).map((field) => (
-                    <SelectItem key={field.key} value={field.key}>
-                      {field.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={setExplorerY}
+                fields={EXPLORER_FIELDS.filter((f) => f.allowedAsY)}
+              />
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -663,12 +681,62 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
   )
 }
 
+function SectionHeading({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+      {children}
+    </h2>
+  )
+}
+
+/** Groups the Explorer's 82 fields under their existing `section` tag
+ * (already carried by every ExplorerFieldMeta) instead of one flat list
+ * — no fields removed or renamed, purely a picker-UI change. */
+function GroupedFieldSelect({
+  value,
+  onChange,
+  fields,
+}: {
+  value: string
+  onChange: (value: string) => void
+  fields: ExplorerFieldMeta[]
+}) {
+  const sections: string[] = []
+  for (const field of fields) {
+    if (!sections.includes(field.section)) sections.push(field.section)
+  }
+
+  return (
+    <Select value={value} onValueChange={(next) => next && onChange(next)}>
+      <SelectTrigger className="w-full">
+        <SelectValue>{() => fields.find((f) => f.key === value)?.label ?? ""}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {sections.map((section) => (
+          <SelectGroup key={section}>
+            <SelectLabel>{section}</SelectLabel>
+            {fields
+              .filter((field) => field.section === section)
+              .map((field) => (
+                <SelectItem key={field.key} value={field.key}>
+                  {field.label}
+                </SelectItem>
+              ))}
+          </SelectGroup>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+
 function SummaryCardView({
   title,
+  methodology,
   card,
   formatter,
 }: {
   title: string
+  methodology: string
   card: { label: string; percentage: number | null; n: number; flag: SampleFlag }
   formatter: (value: number | null) => string
 }) {
@@ -681,7 +749,12 @@ function SummaryCardView({
   return (
     <Card size="sm">
       <CardHeader>
-        <CardDescription>{title}</CardDescription>
+        <CardDescription className="flex flex-col gap-0.5">
+          <span>{title}</span>
+          <span className="text-[10px] tracking-wide text-muted-foreground/70 uppercase">
+            {methodology}
+          </span>
+        </CardDescription>
         <CardTitle className="text-2xl">
           {showValue ? formatter(card.percentage) : "—"}
           <SampleFlagBadge flag={card.flag} />
@@ -696,13 +769,34 @@ function SummaryCardView({
   )
 }
 
-function PairedStat({ label, value }: { label: string; value: number | null }) {
-  return (
-    <div className="rounded-lg border border-border/60 p-3">
-      <p className="text-2xl font-semibold text-foreground">{formatPercentage(value)}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </div>
-  )
+/** Crosstab result -> StackedPercentageBar rows, one per x category. Row
+ * n/flag are derived here (summed from the already-returned cell counts)
+ * purely for display — computeCrosstab's own contract/return type is
+ * untouched. */
+function crosstabToBarRows(result: {
+  xCategories: string[]
+  yCategories: string[]
+  xCategoryLabels: Record<string, string>
+  cells: { xValue: string; yValue: string; count: number; rowPercentage: number }[]
+}): StackedBarRowData[] {
+  return result.xCategories.map((x) => {
+    const cellsForX = result.cells.filter((c) => c.xValue === x)
+    const n = cellsForX.reduce((sum, c) => sum + c.count, 0)
+    const percentageBySegment: Record<string, number> = {}
+    const countBySegment: Record<string, number> = {}
+    for (const cell of cellsForX) {
+      percentageBySegment[cell.yValue] = cell.rowPercentage
+      countBySegment[cell.yValue] = cell.count
+    }
+    return {
+      key: x,
+      label: result.xCategoryLabels[x] ?? x,
+      n,
+      flag: sampleFlag(n),
+      percentageBySegment,
+      countBySegment,
+    }
+  })
 }
 
 function ExplorerResultView({ result }: { result: ExplorerResult }) {
@@ -714,43 +808,41 @@ function ExplorerResultView({ result }: { result: ExplorerResult }) {
   }
 
   if (result.method === "crosstab") {
+    const ySegments = result.yCategories.map((y, index) => ({
+      key: y,
+      label: result.yCategoryLabels[y] ?? y,
+      colorVar: categoricalColorVar(index),
+    }))
+    const useHeatmap = result.yCategories.length > 4
+
     return (
       <div className="flex flex-col gap-2">
-        <div className="overflow-x-auto rounded-lg border border-border/60">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{result.xLabel}</TableHead>
-                {result.yCategories.map((y) => (
-                  <TableHead key={y} className="text-right">
-                    {y}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {result.xCategories.map((x) => (
-                <TableRow key={x}>
-                  <TableCell className="font-medium text-foreground">{x}</TableCell>
-                  {result.yCategories.map((y) => {
-                    const cell = result.cells.find((c) => c.xValue === x && c.yValue === y)
-                    return (
-                      <TableCell key={y} className="text-right tabular-nums">
-                        {cell ? `${cell.rowPercentage}%` : "—"}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        {useHeatmap ? (
+          <HeatmapMatrix
+            rows={result.xCategories.map((x) => {
+              const cells: HeatmapRowData["cells"] = {}
+              for (const y of result.yCategories) {
+                const cell = result.cells.find((c) => c.xValue === x && c.yValue === y)
+                cells[y] = {
+                  value: cell?.rowPercentage ?? null,
+                  n: cell?.count ?? 0,
+                  flag: "ok",
+                }
+              }
+              return { key: x, label: result.xCategoryLabels[x] ?? x, cells }
+            })}
+            columns={result.yCategories.map((y) => ({ key: y, label: result.yCategoryLabels[y] ?? y }))}
+            rowHeaderLabel={result.xLabel}
+          />
+        ) : (
+          <StackedPercentageBar rows={crosstabToBarRows(result)} segments={ySegments} />
+        )}
         <p className="text-xs text-muted-foreground">
           {result.association
             ? `Cramér's V = ${result.association.v.toFixed(2)} (${result.association.strength}, n = ${result.association.n})`
             : "Not enough variation to compute Cramér's V."}
-          <SampleFlagBadge flag={sampleFlag(result.n)} /> — association, not
-          causation. Row percentages (of {result.xLabel}).
+          <SampleFlagBadge flag={sampleFlag(result.n)} /> — row percentages (of{" "}
+          {result.xLabel}).
         </p>
         {result.sparse ? (
           <p className="text-xs text-muted-foreground">
@@ -758,6 +850,39 @@ function ExplorerResultView({ result }: { result: ExplorerResult }) {
             association may be unstable.
           </p>
         ) : null}
+        <DataDetailsDrawer>
+          <div className="overflow-x-auto rounded-lg border border-border/60">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{result.xLabel}</TableHead>
+                  {result.yCategories.map((y) => (
+                    <TableHead key={y} className="text-right">
+                      {result.yCategoryLabels[y] ?? y}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {result.xCategories.map((x) => (
+                  <TableRow key={x}>
+                    <TableCell className="font-medium text-foreground">
+                      {result.xCategoryLabels[x] ?? x}
+                    </TableCell>
+                    {result.yCategories.map((y) => {
+                      const cell = result.cells.find((c) => c.xValue === x && c.yValue === y)
+                      return (
+                        <TableCell key={y} className="text-right tabular-nums">
+                          {cell ? `${cell.rowPercentage}%` : "—"}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DataDetailsDrawer>
       </div>
     )
   }
@@ -775,116 +900,171 @@ function ExplorerResultView({ result }: { result: ExplorerResult }) {
         ) : (
           "not enough data"
         )}
-        . Association, not causation.
+        .
       </p>
     )
   }
 
   if (result.method === "ordinal-by-group") {
+    const domainValues = result.rows.map((row) => row.median).filter((v): v is number => v !== null)
+    const domain: [number, number] =
+      domainValues.length > 0
+        ? [Math.min(0, ...domainValues), Math.max(...domainValues, 1)]
+        : [0, 1]
+    const groupSeries = result.rows.map((row, index) => ({
+      key: row.group,
+      label: result.groupLabels[row.group] ?? row.group,
+      colorVar: categoricalColorVar(index),
+    }))
+
     return (
-      <div className="overflow-x-auto rounded-lg border border-border/60">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{result.groupLabel}</TableHead>
-              <TableHead className="text-right">Median {result.valueLabel}</TableHead>
-              <TableHead className="text-right">Mean</TableHead>
-              <TableHead className="text-right">n</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {result.rows.map((row) => (
-              <TableRow key={row.group}>
-                <TableCell className="font-medium text-foreground">{row.group}</TableCell>
-                {shouldShowValue(row.flag) ? (
-                  <>
-                    <TableCell className="text-right tabular-nums font-medium">
-                      {row.median ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
-                      {row.mean !== null ? row.mean.toFixed(2) : "—"}
-                    </TableCell>
-                  </>
-                ) : (
-                  <TableCell colSpan={2} className="text-center text-xs text-muted-foreground">
-                    Not enough responses
-                  </TableCell>
-                )}
-                <TableCell className="text-right tabular-nums text-muted-foreground">
-                  {row.n}
-                  <SampleFlagBadge flag={row.flag} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <p className="p-2 text-xs text-muted-foreground">
+      <div className="flex flex-col gap-2">
+        <CenteredDotPlot
+          rows={[
+            {
+              key: result.valueLabel,
+              label: `Median ${result.valueLabel}`,
+              points: result.rows.map((row) => ({
+                seriesKey: row.group,
+                value: row.median,
+                n: row.n,
+                flag: row.flag,
+                detail: row.mean !== null ? `mean ${row.mean.toFixed(2)}` : undefined,
+              })),
+            },
+          ]}
+          series={groupSeries}
+          domain={domain}
+        />
+        <p className="text-xs text-muted-foreground">
           Median is the primary figure for this ordinal scale — mean is
-          shown for reference only, since equal category intervals aren&apos;t
+          shown on hover only, since equal category intervals aren&apos;t
           guaranteed to be equal psychologically.
         </p>
+        <DataDetailsDrawer>
+          <div className="overflow-x-auto rounded-lg border border-border/60">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{result.groupLabel}</TableHead>
+                  <TableHead className="text-right">Median {result.valueLabel}</TableHead>
+                  <TableHead className="text-right">Mean</TableHead>
+                  <TableHead className="text-right">n</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {result.rows.map((row) => (
+                  <TableRow key={row.group}>
+                    <TableCell className="font-medium text-foreground">
+                      {result.groupLabels[row.group] ?? row.group}
+                    </TableCell>
+                    {shouldShowValue(row.flag) ? (
+                      <>
+                        <TableCell className="text-right tabular-nums font-medium">
+                          {row.median ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+                          {row.mean !== null ? row.mean.toFixed(2) : "—"}
+                        </TableCell>
+                      </>
+                    ) : (
+                      <TableCell colSpan={2} className="text-center text-xs text-muted-foreground">
+                        Not enough responses
+                      </TableCell>
+                    )}
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {row.n}
+                      <SampleFlagBadge flag={row.flag} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DataDetailsDrawer>
       </div>
     )
   }
 
   if (result.method === "prevalence-by-group") {
     return (
-      <div className="overflow-x-auto rounded-lg border border-border/60">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{result.groupLabel}</TableHead>
-              {result.options.map((option) => (
-                <TableHead key={option.value} className="text-right">
-                  {option.label}
-                </TableHead>
-              ))}
-              <TableHead className="text-right">n</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {result.rows.map((row) => (
-              <TableRow key={row.group}>
-                <TableCell className="font-medium text-foreground">{row.group}</TableCell>
-                {shouldShowValue(row.flag) ? (
-                  result.options.map((option) => (
-                    <TableCell key={option.value} className="text-right tabular-nums">
-                      {row.percentageByOption[option.value]}%
+      <div className="flex flex-col gap-2">
+        <HeatmapMatrix
+          rows={result.rows.map((row) => {
+            const cells: HeatmapRowData["cells"] = {}
+            for (const option of result.options) {
+              cells[option.value] = {
+                value: shouldShowValue(row.flag) ? row.percentageByOption[option.value] : null,
+                n: row.n,
+                flag: row.flag,
+              }
+            }
+            return { key: row.group, label: result.groupLabels[row.group] ?? row.group, cells }
+          })}
+          columns={result.options.map((option) => ({ key: option.value, label: option.label }))}
+          rowHeaderLabel={result.groupLabel}
+          caption="Multiple selections were allowed — percentages don't need to sum to 100%."
+        />
+        <DataDetailsDrawer>
+          <div className="overflow-x-auto rounded-lg border border-border/60">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{result.groupLabel}</TableHead>
+                  {result.options.map((option) => (
+                    <TableHead key={option.value} className="text-right">
+                      {option.label}
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-right">n</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {result.rows.map((row) => (
+                  <TableRow key={row.group}>
+                    <TableCell className="font-medium text-foreground">
+                      {result.groupLabels[row.group] ?? row.group}
                     </TableCell>
-                  ))
-                ) : (
-                  <TableCell
-                    colSpan={result.options.length}
-                    className="text-center text-xs text-muted-foreground"
-                  >
-                    Not enough responses
-                  </TableCell>
-                )}
-                <TableCell className="text-right tabular-nums text-muted-foreground">
-                  {row.n}
-                  <SampleFlagBadge flag={row.flag} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <p className="p-2 text-xs text-muted-foreground">
-          Multi-select — percentages don&apos;t need to sum to 100%.
-        </p>
+                    {shouldShowValue(row.flag) ? (
+                      result.options.map((option) => (
+                        <TableCell key={option.value} className="text-right tabular-nums">
+                          {row.percentageByOption[option.value]}%
+                        </TableCell>
+                      ))
+                    ) : (
+                      <TableCell
+                        colSpan={result.options.length}
+                        className="text-center text-xs text-muted-foreground"
+                      >
+                        Not enough responses
+                      </TableCell>
+                    )}
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {row.n}
+                      <SampleFlagBadge flag={row.flag} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DataDetailsDrawer>
       </div>
     )
   }
 
   // paired-difference
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      <PairedStat label={`Lower on ${result.xLabel}`} value={result.lowerPercentage} />
-      <PairedStat label="No difference" value={result.samePercentage} />
-      <PairedStat label={`Higher on ${result.xLabel}`} value={result.higherPercentage} />
-      <p className="col-span-full text-xs text-muted-foreground">
-        Median gap: {result.medianGap ?? "—"} · n = {result.n}
-        <SampleFlagBadge flag={sampleFlag(result.n)} />
-      </p>
-    </div>
+    <DivergingCompositionBar
+      lowerLabel={`Lower on ${result.xLabel}`}
+      lowerPercentage={result.lowerPercentage}
+      sameLabel="No difference"
+      samePercentage={result.samePercentage}
+      higherLabel={`Higher on ${result.xLabel}`}
+      higherPercentage={result.higherPercentage}
+      n={result.n}
+      flag={sampleFlag(result.n)}
+      medianCaption={`Median gap: ${result.medianGap ?? "—"}`}
+    />
   )
 }

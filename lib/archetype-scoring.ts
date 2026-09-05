@@ -458,7 +458,7 @@ export function calculateAlternativeForager(
       key: "alternativeBehaviour",
       label: "What you usually do before lunch on non-breakfast days",
       weight: 0.2,
-      rawInput: a.nonBreakfastMealSource || null,
+      rawInput: a.nonBreakfastMealSource,
       normalizedValue: normalizeAlternativeBehaviour(
         a.nonBreakfastMealSource
       ),
@@ -679,7 +679,15 @@ export function calculateArchetypeResult(
 // instead of silently changing on a later render.
 //
 // Bump this whenever a formula, weight, or normalization mapping changes.
-export const ARCHETYPE_ENGINE_VERSION = 1
+//
+// v2: nonBreakfastMealSource became multi-select (checkboxes instead of
+// a single radio) — normalizeAlternativeBehaviour now takes MAX over the
+// selected values instead of looking up one. This is also the same
+// number stamped as `survey_version` on the raw response row (see
+// lib/survey-submission.ts), which is how lib/analytics/parse.ts knows
+// nonBreakfastMealSource is stored as an array from here on, while v1
+// rows keep their original single-value shape.
+export const ARCHETYPE_ENGINE_VERSION = 2
 
 export interface PersistedArchetypeResult {
   primaryArchetype: ArchetypeId

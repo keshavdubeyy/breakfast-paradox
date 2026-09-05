@@ -224,10 +224,10 @@ function validate(
 ): Partial<Record<RequiredFieldKey, string>> {
   const errors: Partial<Record<RequiredFieldKey, string>> = {}
 
-  if (!values.nonBreakfastMealSource) {
-    errors.nonBreakfastMealSource = "Please select an option."
+  if (values.nonBreakfastMealSource.length === 0) {
+    errors.nonBreakfastMealSource = "Please select at least one option."
   } else if (
-    values.nonBreakfastMealSource === OTHER_ACTIVITY_VALUE &&
+    values.nonBreakfastMealSource.includes(OTHER_ACTIVITY_VALUE) &&
     !values.nonBreakfastMealSourceOther.trim()
   ) {
     errors.nonBreakfastMealSource = "Please describe the other option."
@@ -391,9 +391,11 @@ export default function AfterMorningRoutinePage() {
     saveAfterMorningRoutineAnswers({ ...values, [key]: value })
   }
 
-  function updateNonBreakfastMealSource(value: string) {
-    updateField("nonBreakfastMealSource", value)
-    advance("nonBreakfastMealSource")
+  function updateNonBreakfastMealSource(value: string, checked: boolean) {
+    updateField(
+      "nonBreakfastMealSource",
+      toggleValue(values.nonBreakfastMealSource, value, checked)
+    )
   }
 
   function updateWeekendBreakfastComparison(value: string) {
@@ -580,20 +582,17 @@ export default function AfterMorningRoutinePage() {
         <QuestionBlock
           ref={registerBlock("nonBreakfastMealSource")}
           title="On days you don't eat breakfast at the mess, what do you usually do for food before lunch?"
-          helperText="Select the option that happens most often."
+          helperText="Select all that apply."
           required
           error={errors.nonBreakfastMealSource}
         >
           {({ describedBy }) => (
             <div className="flex flex-col gap-3">
-              <RadioGroup
+              <div
+                role="group"
                 aria-describedby={describedBy}
-                aria-invalid={!!errors.nonBreakfastMealSource}
-                value={values.nonBreakfastMealSource}
-                onValueChange={(value) =>
-                  updateNonBreakfastMealSource(value as string)
-                }
-                className="gap-0"
+                data-invalid={!!errors.nonBreakfastMealSource}
+                className="flex flex-col gap-0"
               >
                 {NON_BREAKFAST_MEAL_SOURCE_OPTIONS.map((option) => (
                   <Label
@@ -601,16 +600,26 @@ export default function AfterMorningRoutinePage() {
                     htmlFor={`non-breakfast-meal-source-${option.value}`}
                     className="min-h-11 items-center gap-3 py-1 text-base font-normal text-foreground"
                   >
-                    <RadioGroupItem
+                    <Checkbox
                       id={`non-breakfast-meal-source-${option.value}`}
-                      value={option.value}
+                      checked={values.nonBreakfastMealSource.includes(
+                        option.value
+                      )}
+                      onCheckedChange={(checked) =>
+                        updateNonBreakfastMealSource(
+                          option.value,
+                          checked === true
+                        )
+                      }
                     />
                     {option.label}
                   </Label>
                 ))}
-              </RadioGroup>
+              </div>
 
-              {values.nonBreakfastMealSource === OTHER_ACTIVITY_VALUE ? (
+              {values.nonBreakfastMealSource.includes(
+                OTHER_ACTIVITY_VALUE
+              ) ? (
                 <Input
                   id="non-breakfast-meal-source-other-input"
                   placeholder="Describe what you usually do"

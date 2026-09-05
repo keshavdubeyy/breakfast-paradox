@@ -57,7 +57,7 @@ import {
 } from "@/lib/survey-options"
 import { ARCHETYPE_IDS, ARCHETYPES } from "@/lib/archetype-content"
 import { median } from "../metrics"
-import { percentageOf } from "../distributions"
+import { labelFor, percentageOf } from "../distributions"
 import type { AnalyticsRow, Branch } from "../types"
 import { cramersV, spearman } from "./associations"
 import {
@@ -617,7 +617,10 @@ export const EXPLORER_FIELDS: ExplorerFieldMeta[] = [
   ),
 
   // --- Alternative food & spending (everyone) --------------------------
-  categoricalField(
+  // Multi-select as of survey_version 2 (see parse.ts's V2_ACCESSORS) —
+  // a v1 row's single answer is wrapped into a one-element array, so
+  // this field is safe to treat as multi-select across every version.
+  multiSelectField(
     "nonBreakfastMealSource",
     "Where food comes from instead",
     "Alternative food & spending",
@@ -699,6 +702,13 @@ export interface ExplorerCrosstabResult {
   cells: CrosstabCell[]
   xCategories: string[]
   yCategories: string[]
+  /** Display label per category value — categories are stored as raw
+   * option values (see xCategories/yCategories) so the chart layer can
+   * still color/key by value; the label lookup is separate purely for
+   * display, resolved from the same xField.options/yField.options every
+   * other Patterns view already uses. */
+  xCategoryLabels: Record<string, string>
+  yCategoryLabels: Record<string, string>
   association: ReturnType<typeof cramersV>
   n: number
   /** True when the average expected count per contingency-table cell is
@@ -731,6 +741,8 @@ export interface ExplorerOrdinalByGroupResult {
   groupLabel: string
   valueLabel: string
   rows: ExplorerOrdinalByGroupRow[]
+  /** Display label per `row.group` value — see xCategoryLabels above. */
+  groupLabels: Record<string, string>
   n: number
 }
 
@@ -747,6 +759,8 @@ export interface ExplorerPrevalenceByGroupResult {
     flag: SampleFlag
   }[]
   options: SurveyOption[]
+  /** Display label per `row.group` value — see xCategoryLabels above. */
+  groupLabels: Record<string, string>
 }
 
 export interface ExplorerPairedResult {
@@ -889,6 +903,8 @@ export function computeCrosstab(
     cells,
     xCategories,
     yCategories,
+    xCategoryLabels: Object.fromEntries(xCategories.map((v) => [v, labelFor(xField.options ?? [], v)])),
+    yCategoryLabels: Object.fromEntries(yCategories.map((v) => [v, labelFor(yField.options ?? [], v)])),
     association: cramersV(
       pairs.map((p) => p[0]),
       pairs.map((p) => p[1])
@@ -961,6 +977,7 @@ export function computeOrdinalByGroup(
     groupLabel: groupField.label,
     valueLabel: ordinalField.label,
     rows: resultRows,
+    groupLabels: Object.fromEntries(groups.map((v) => [v, labelFor(groupField.options ?? [], v)])),
     n: totalN,
   }
 }
@@ -998,6 +1015,7 @@ export function computePrevalenceByGroup(
     optionLabel: multiField.label,
     rows: resultRows,
     options,
+    groupLabels: Object.fromEntries(groups.map((v) => [v, labelFor(groupField.options ?? [], v)])),
   }
 }
 

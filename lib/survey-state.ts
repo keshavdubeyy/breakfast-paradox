@@ -77,7 +77,7 @@ export interface UsualRoutineAnswers {
 // Section 4: "After your morning routine" — asked of everyone, after the
 // Branch A/B/C follow-up on the Breakfast Routine page.
 export interface AfterMorningRoutineAnswers {
-  nonBreakfastMealSource: string
+  nonBreakfastMealSource: string[]
   nonBreakfastMealSourceOther: string
   nextFoodTime: string
   earlyCommitmentBreakfastFrequency: string
@@ -193,7 +193,7 @@ export const defaultUsualRoutineAnswers: UsualRoutineAnswers = {
 }
 
 export const defaultAfterMorningRoutineAnswers: AfterMorningRoutineAnswers = {
-  nonBreakfastMealSource: "",
+  nonBreakfastMealSource: [],
   nonBreakfastMealSourceOther: "",
   nextFoodTime: "",
   earlyCommitmentBreakfastFrequency: "",

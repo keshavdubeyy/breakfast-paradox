@@ -328,10 +328,10 @@ export function EventsClient({ rows, isSampleData }: EventsClientProps) {
                 onBucketClick={(bucket) =>
                   setDrawer({
                     title: `Before-lunch food source: ${bucket.label}`,
-                    rows: filterRowsByField(
+                    rows: filterRowsByArrayField(
                       filteredRows,
                       "nonBreakfastMealSource",
-                      fieldValueFromBucket(bucket)
+                      bucket.value
                     ),
                   })
                 }

@@ -37,12 +37,24 @@ import {
   type DistributionBucket,
 } from "../distributions"
 import type { AnalyticsRow, Branch } from "../types"
-import { computeEligibility, type Eligibility } from "./types"
+import { computeEligibility, sampleFlag, type Eligibility, type SampleFlag } from "./types"
+
+export interface RankedDistributionBucket extends DistributionBucket {
+  /** Per-bucket sample-size flag (the same MIN_CELL_N/SMALL_SAMPLE_N
+   * rule as every other Patterns visual) — a bucket built from a
+   * single-digit count of respondents is flagged here instead of
+   * rendering as a confident-looking bar. */
+  flag: SampleFlag
+}
 
 export interface BranchFieldSummary {
   key: string
   label: string
-  distribution: DistributionBucket[]
+  /** Which within-branch subgroup this question belongs to (e.g.
+   * "Routine", "Adaptation", "Disruption") — purely a display grouping
+   * for the accordion-of-accordions UI, not a new eligibility rule. */
+  group: string
+  distribution: RankedDistributionBucket[]
   eligibility: Eligibility
 }
 
@@ -54,12 +66,17 @@ export interface BranchDeepDive {
 interface FieldSpec {
   key: keyof AnalyticsRow
   label: string
+  group: string
   options: SurveyOption[]
   multi?: boolean
   /** Secondary gate beyond the branch itself — e.g. "only respondents who
    * said their routine changes on early-class days were then asked how".
    * Applied on top of the branch filter, over branch members only. */
   gate?: (row: AnalyticsRow) => boolean
+}
+
+function withFlags(distribution: DistributionBucket[]): RankedDistributionBucket[] {
+  return distribution.map((bucket) => ({ ...bucket, flag: sampleFlag(bucket.count) }))
 }
 
 function buildFieldSummary(branchRows: AnalyticsRow[], spec: FieldSpec): BranchFieldSummary {
@@ -71,7 +88,8 @@ function buildFieldSummary(branchRows: AnalyticsRow[], spec: FieldSpec): BranchF
     return {
       key: spec.key as string,
       label: spec.label,
-      distribution: buildMultiSelectDistribution(eligibleRows, getValues, spec.options),
+      group: spec.group,
+      distribution: withFlags(buildMultiSelectDistribution(eligibleRows, getValues, spec.options)),
       eligibility: computeEligibility(branchRows.length, eligibleRows.length, answered.length),
     }
   }
@@ -81,7 +99,8 @@ function buildFieldSummary(branchRows: AnalyticsRow[], spec: FieldSpec): BranchF
   return {
     key: spec.key as string,
     label: spec.label,
-    distribution: buildOrderedDistribution(eligibleRows, getValue, spec.options),
+    group: spec.group,
+    distribution: withFlags(buildOrderedDistribution(eligibleRows, getValue, spec.options)),
     eligibility: computeEligibility(branchRows.length, eligibleRows.length, answered.length),
   }
 }
@@ -89,31 +108,34 @@ function buildFieldSummary(branchRows: AnalyticsRow[], spec: FieldSpec): BranchF
 const NOT_NEVER = (value: string | null) => value !== null && value !== "never"
 
 const BRANCH_A_SPECS: FieldSpec[] = [
-  { key: "messBreakfastTime", label: "Usual mess breakfast time", options: MESS_BREAKFAST_TIME_OPTIONS },
-  { key: "breakfastMoment", label: "Point in morning breakfast happens", options: BREAKFAST_MOMENT_OPTIONS },
-  { key: "breakfastRoutineDuration", label: "Breakfast routine duration", options: BREAKFAST_ROUTINE_DURATION_OPTIONS },
-  { key: "earlyClassRoutineChange", label: "Adapts routine on early-class days", options: YES_NO_SOMETIMES_OPTIONS },
+  { key: "messBreakfastTime", label: "Usual mess breakfast time", group: "Routine", options: MESS_BREAKFAST_TIME_OPTIONS },
+  { key: "breakfastMoment", label: "Point in morning breakfast happens", group: "Routine", options: BREAKFAST_MOMENT_OPTIONS },
+  { key: "breakfastRoutineDuration", label: "Breakfast routine duration", group: "Routine", options: BREAKFAST_ROUTINE_DURATION_OPTIONS },
+  { key: "breakfastRoutineDescription", label: "How breakfast fits the routine", group: "Routine", options: BREAKFAST_ROUTINE_DESCRIPTION_OPTIONS },
+  { key: "earlyClassRoutineChange", label: "Adapts routine on early-class days", group: "Adaptation", options: YES_NO_SOMETIMES_OPTIONS },
   {
     key: "earlyClassRoutineChangeActions",
     label: "How the routine is adapted",
+    group: "Adaptation",
     options: EARLY_CLASS_ROUTINE_CHANGE_OPTIONS,
     multi: true,
     gate: (row) => row.earlyClassRoutineChange === "yes" || row.earlyClassRoutineChange === "sometimes",
   },
-  { key: "unwantedMessActions", label: "What happens when allotted mess isn't wanted", options: UNWANTED_MESS_ACTION_OPTIONS, multi: true },
-  { key: "messConsistency", label: "Consistency of allotted mess", options: MESS_CONSISTENCY_OPTIONS },
+  { key: "unwantedMessActions", label: "What happens when allotted mess isn't wanted", group: "Mess behaviour", options: UNWANTED_MESS_ACTION_OPTIONS, multi: true },
+  { key: "messConsistency", label: "Consistency of allotted mess", group: "Mess behaviour", options: MESS_CONSISTENCY_OPTIONS },
   {
     key: "messChangeDeterminants",
     label: "What determines mess choice when it changes",
+    group: "Mess behaviour",
     options: MESS_CHANGE_DETERMINANT_OPTIONS,
     multi: true,
     gate: (row) => row.messConsistency === "changes-sometimes" || row.messConsistency === "changes-frequently",
   },
-  { key: "breakfastRoutineDescription", label: "How breakfast fits the routine", options: BREAKFAST_ROUTINE_DESCRIPTION_OPTIONS },
-  { key: "missedBreakfastFrequency", label: "How often a planned mess breakfast is missed", options: MISSED_BREAKFAST_FREQUENCY_OPTIONS },
+  { key: "missedBreakfastFrequency", label: "How often a planned mess breakfast is missed", group: "Disruption", options: MISSED_BREAKFAST_FREQUENCY_OPTIONS },
   {
     key: "missedBreakfastReasons",
     label: "Why a planned mess breakfast is missed",
+    group: "Disruption",
     options: MISSED_BREAKFAST_REASON_OPTIONS,
     multi: true,
     gate: (row) => NOT_NEVER(row.missedBreakfastFrequency),
@@ -121,14 +143,15 @@ const BRANCH_A_SPECS: FieldSpec[] = [
 ]
 
 const BRANCH_B_SPECS: FieldSpec[] = [
-  { key: "conditionalMessBreakfastTime", label: "Usual mess breakfast time (conditional)", options: MESS_BREAKFAST_TIME_OPTIONS },
-  { key: "breakfastDecisionPoint", label: "When the breakfast decision is made", options: BREAKFAST_DECISION_POINT_OPTIONS },
-  { key: "breakfastDayDifferentiators", label: "What differs on eat vs. non-eat days", options: BREAKFAST_DAY_DIFFERENTIATOR_OPTIONS, multi: true },
-  { key: "breakfastPlannedButSkippedFrequency", label: "Plans to eat but ends up skipping", options: MISSED_BREAKFAST_FREQUENCY_OPTIONS },
-  { key: "breakfastUnplannedButWentFrequency", label: "Plans to skip but ends up eating", options: MISSED_BREAKFAST_FREQUENCY_OPTIONS },
+  { key: "conditionalMessBreakfastTime", label: "Usual mess breakfast time (conditional)", group: "Routine", options: MESS_BREAKFAST_TIME_OPTIONS },
+  { key: "breakfastDecisionPoint", label: "When the breakfast decision is made", group: "Routine", options: BREAKFAST_DECISION_POINT_OPTIONS },
+  { key: "breakfastDayDifferentiators", label: "What differs on eat vs. non-eat days", group: "Routine", options: BREAKFAST_DAY_DIFFERENTIATOR_OPTIONS, multi: true },
+  { key: "breakfastPlannedButSkippedFrequency", label: "Plans to eat but ends up skipping", group: "Plan changes", options: MISSED_BREAKFAST_FREQUENCY_OPTIONS },
+  { key: "breakfastUnplannedButWentFrequency", label: "Plans to skip but ends up eating", group: "Plan changes", options: MISSED_BREAKFAST_FREQUENCY_OPTIONS },
   {
     key: "breakfastPlanChangeReasons",
     label: "Why the plan changes",
+    group: "Plan changes",
     options: BREAKFAST_PLAN_CHANGE_REASON_OPTIONS,
     multi: true,
     gate: (row) =>
@@ -137,19 +160,20 @@ const BRANCH_B_SPECS: FieldSpec[] = [
 ]
 
 const BRANCH_C_SPECS: FieldSpec[] = [
-  { key: "breakfastAbsenceReason", label: "Whether skipping is a conscious decision", options: BREAKFAST_ABSENCE_REASON_OPTIONS },
-  { key: "breakfastAbsenceDecisionPoint", label: "When the absence is decided", options: BREAKFAST_ABSENCE_DECISION_POINT_OPTIONS },
-  { key: "occasionalBreakfastFrequency", label: "How often they still go occasionally", options: OCCASIONAL_BREAKFAST_FREQUENCY_OPTIONS },
+  { key: "breakfastAbsenceReason", label: "Whether skipping is a conscious decision", group: "Absence", options: BREAKFAST_ABSENCE_REASON_OPTIONS },
+  { key: "breakfastAbsenceDecisionPoint", label: "When the absence is decided", group: "Absence", options: BREAKFAST_ABSENCE_DECISION_POINT_OPTIONS },
+  { key: "breakfastServedTimeActivity", label: "What they're doing when breakfast is served", group: "Absence", options: BREAKFAST_SERVED_TIME_ACTIVITY_OPTIONS },
+  { key: "unusedAllottedMealActions", label: "What happens to the unused allotted meal", group: "Absence", options: UNUSED_ALLOTTED_MEAL_ACTION_OPTIONS, multi: true },
+  { key: "occasionalBreakfastFrequency", label: "How often they still go occasionally", group: "Occasional breakfast", options: OCCASIONAL_BREAKFAST_FREQUENCY_OPTIONS },
   {
     key: "occasionalBreakfastDifferentiators",
     label: "What's different on occasional-breakfast days",
+    group: "Occasional breakfast",
     options: OCCASIONAL_BREAKFAST_DIFFERENTIATOR_OPTIONS,
     multi: true,
     gate: (row) => NOT_NEVER(row.occasionalBreakfastFrequency),
   },
-  { key: "breakfastFrequencyChanged", label: "Used to eat breakfast more often", options: YES_NO_NOT_SURE_OPTIONS },
-  { key: "breakfastServedTimeActivity", label: "What they're doing when breakfast is served", options: BREAKFAST_SERVED_TIME_ACTIVITY_OPTIONS },
-  { key: "unusedAllottedMealActions", label: "What happens to the unused allotted meal", options: UNUSED_ALLOTTED_MEAL_ACTION_OPTIONS, multi: true },
+  { key: "breakfastFrequencyChanged", label: "Used to eat breakfast more often", group: "Occasional breakfast", options: YES_NO_NOT_SURE_OPTIONS },
 ]
 
 const SPECS_BY_BRANCH: Record<Branch, FieldSpec[]> = {

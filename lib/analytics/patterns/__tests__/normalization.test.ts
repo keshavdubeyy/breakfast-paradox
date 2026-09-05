@@ -78,7 +78,7 @@ function makeRow(overrides: Partial<AnalyticsRow> = {}): AnalyticsRow {
     breakfastPlanChangeReasons: [],
     breakfastServedTimeActivity: null,
     unusedAllottedMealActions: [],
-    nonBreakfastMealSource: null,
+    nonBreakfastMealSource: [],
     nextFoodTime: null,
     nonBreakfastSpendingFrequency: null,
     nonBreakfastSpendingAmount: null,

@@ -118,7 +118,11 @@ export interface AnalyticsRow {
   unusedAllottedMealActions: string[]
 
   // After Your Morning Routine — asked of everyone
-  nonBreakfastMealSource: string | null
+  /** Multi-select as of survey_version 2 — a v1 row's single answer is
+   * wrapped into a one-element array by V1_ACCESSORS in parse.ts, so
+   * every consumer here always sees an array regardless of source
+   * version. */
+  nonBreakfastMealSource: string[]
   nextFoodTime: string | null
   nonBreakfastSpendingFrequency: string | null
   nonBreakfastSpendingAmount: string | null

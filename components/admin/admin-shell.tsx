@@ -1,6 +1,6 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -26,7 +26,33 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar"
+
+// A tablet-width viewport (roughly 768-1100px) gets the full 256px
+// sidebar treated as "desktop" today — there's no automatic collapse
+// between the mobile overlay and the full desktop width. This nudges a
+// tablet-sized viewport to start icon-collapsed (still fully togglable
+// by the user afterwards) so dense Patterns/Events tables get more room
+// instead of being squeezed into what's left after a fixed-width
+// sidebar. Runs once on mount only — it must never fight a user's own
+// toggle on a later resize.
+const TABLET_MAX_WIDTH = 1100
+
+function TabletAutoCollapse() {
+  const { isMobile, setOpen } = useSidebar()
+  const didRun = useRef(false)
+
+  useEffect(() => {
+    if (didRun.current || isMobile) return
+    didRun.current = true
+    if (window.innerWidth < TABLET_MAX_WIDTH) {
+      setOpen(false)
+    }
+  }, [isMobile, setOpen])
+
+  return null
+}
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { logout } from "@/app/admin/login/actions"
@@ -54,6 +80,7 @@ export function AdminShell({ children }: AdminShellProps) {
 
   return (
     <SidebarProvider>
+      <TabletAutoCollapse />
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center gap-2 px-2 py-1">
@@ -126,7 +153,7 @@ export function AdminShell({ children }: AdminShellProps) {
             Survey analytics, internal only
           </span>
         </header>
-        <main className="flex-1 px-6 py-6">{children}</main>
+        <main className="min-w-0 flex-1 px-6 py-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   )

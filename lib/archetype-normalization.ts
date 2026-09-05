@@ -157,6 +157,12 @@ export function normalizeDecisionVariability(raw: string | null | undefined) {
 // brief's table — treated as the neutral default (0.50) rather than
 // excluded, since this field is always answered (it's a required common
 // question, not a branch-conditional one).
+//
+// Multi-select as of ARCHETYPE_ENGINE_VERSION 2: MAX over the selected
+// values, never the average — same convention as
+// normalizeTransferBehaviour above, so someone who selects both "wait
+// until lunch" and "buy from VC" is scored on their most proactive
+// alternative-food behaviour, not diluted toward the passive option.
 
 export const ALTERNATIVE_BEHAVIOUR_SCALE: Record<string, number> = {
   "buy-vc-canteen": 1,
@@ -168,11 +174,18 @@ export const ALTERNATIVE_BEHAVIOUR_SCALE: Record<string, number> = {
 }
 export const ALTERNATIVE_BEHAVIOUR_DEFAULT = 0.5
 
-export function normalizeAlternativeBehaviour(raw: string | null | undefined) {
-  if (!raw) {
+export function normalizeAlternativeBehaviour(selected: string[]): number | null {
+  if (selected.length === 0) {
     return null
   }
-  return ALTERNATIVE_BEHAVIOUR_SCALE[raw] ?? ALTERNATIVE_BEHAVIOUR_DEFAULT
+  let max = -Infinity
+  for (const value of selected) {
+    const scored = ALTERNATIVE_BEHAVIOUR_SCALE[value] ?? ALTERNATIVE_BEHAVIOUR_DEFAULT
+    if (scored > max) {
+      max = scored
+    }
+  }
+  return max
 }
 
 // --- Meal transfer behaviour (usualRoutine.breakfastPlanChangeActions) ---

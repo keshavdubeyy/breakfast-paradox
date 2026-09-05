@@ -117,10 +117,54 @@ describe("parseAnalyticsRow — attention check", () => {
 describe("parseAnalyticsRow — unknown survey version", () => {
   it("falls back to v1 field accessors instead of throwing", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-    const row = parseAnalyticsRow(rawResponse({ survey_version: 2 }), null)
+    // 999 is deliberately never registered in FIELD_ACCESSORS_BY_VERSION —
+    // versions 1 and 2 are both real, accessor-backed versions now.
+    const row = parseAnalyticsRow(rawResponse({ survey_version: 999 }), null)
     expect(row.breakfastFrequency).toBe("most-days")
-    expect(row.surveyVersion).toBe(2)
+    expect(row.surveyVersion).toBe(999)
     expect(warnSpy).toHaveBeenCalled()
     warnSpy.mockRestore()
+  })
+})
+
+describe("parseAnalyticsRow — nonBreakfastMealSource version handling", () => {
+  it("v1: wraps the old single-string answer into a one-element array", () => {
+    const row = parseAnalyticsRow(
+      rawResponse({
+        survey_version: 1,
+        after_morning_routine: { nonBreakfastMealSource: "buy-vc-canteen" },
+      }),
+      null
+    )
+    expect(row.nonBreakfastMealSource).toEqual(["buy-vc-canteen"])
+  })
+
+  it("v1: an unanswered field becomes an empty array, not [null]", () => {
+    const row = parseAnalyticsRow(
+      rawResponse({ survey_version: 1, after_morning_routine: {} }),
+      null
+    )
+    expect(row.nonBreakfastMealSource).toEqual([])
+  })
+
+  it("v2: reads the field natively as an array (checkboxes)", () => {
+    const row = parseAnalyticsRow(
+      rawResponse({
+        survey_version: 2,
+        after_morning_routine: {
+          nonBreakfastMealSource: ["buy-vc-canteen", "order-online"],
+        },
+      }),
+      null
+    )
+    expect(row.nonBreakfastMealSource).toEqual(["buy-vc-canteen", "order-online"])
+  })
+
+  it("v2: an unanswered field becomes an empty array", () => {
+    const row = parseAnalyticsRow(
+      rawResponse({ survey_version: 2, after_morning_routine: {} }),
+      null
+    )
+    expect(row.nonBreakfastMealSource).toEqual([])
   })
 })

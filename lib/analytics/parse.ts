@@ -185,9 +185,12 @@ interface FieldAccessors {
     usualRoutine: Record<string, unknown>
   ) => string | null
 
+  /** Multi-select as of survey_version 2 — V1_ACCESSORS wraps the old
+   * single-string answer into a one-element array so every version
+   * presents the same shape to the rest of the analytics layer. */
   nonBreakfastMealSource: (
     afterMorningRoutine: Record<string, unknown>
-  ) => string | null
+  ) => string[]
   nextFoodTime: (afterMorningRoutine: Record<string, unknown>) => string | null
   nonBreakfastSpendingFrequency: (
     afterMorningRoutine: Record<string, unknown>
@@ -346,8 +349,13 @@ const V1_ACCESSORS: FieldAccessors = {
   breakfastFrequencyChangeDescription: (usualRoutine) =>
     readString(usualRoutine, "breakfastFrequencyChangeDescription"),
 
-  nonBreakfastMealSource: (afterMorningRoutine) =>
-    readString(afterMorningRoutine, "nonBreakfastMealSource"),
+  // v1 stored a single radio value — wrap it into a one-element array so
+  // every downstream consumer can treat this field as multi-select
+  // regardless of which version produced the row.
+  nonBreakfastMealSource: (afterMorningRoutine) => {
+    const value = readString(afterMorningRoutine, "nonBreakfastMealSource")
+    return value === null ? [] : [value]
+  },
   nextFoodTime: (afterMorningRoutine) =>
     readString(afterMorningRoutine, "nextFoodTime"),
   nonBreakfastSpendingFrequency: (afterMorningRoutine) =>
@@ -388,8 +396,19 @@ const V1_ACCESSORS: FieldAccessors = {
     readString(afterMorningRoutine, "semesterBreakfastChange"),
 }
 
+// v2 differs from v1 only in nonBreakfastMealSource's raw shape (array
+// instead of a single string, since that question became multi-select) —
+// every other field is read identically, so this is a shallow override
+// rather than a full second accessor set.
+const V2_ACCESSORS: FieldAccessors = {
+  ...V1_ACCESSORS,
+  nonBreakfastMealSource: (afterMorningRoutine) =>
+    readStringArray(afterMorningRoutine, "nonBreakfastMealSource"),
+}
+
 const FIELD_ACCESSORS_BY_VERSION: Record<number, FieldAccessors> = {
   1: V1_ACCESSORS,
+  2: V2_ACCESSORS,
 }
 
 function accessorsFor(surveyVersion: number): FieldAccessors {

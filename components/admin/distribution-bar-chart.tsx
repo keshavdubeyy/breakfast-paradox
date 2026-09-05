@@ -79,6 +79,7 @@ export function DistributionBarChart({
           dataKey="count"
           fill="var(--color-count)"
           radius={4}
+          maxBarSize={28}
           cursor={onBucketClick ? "pointer" : undefined}
           onClick={
             onBucketClick

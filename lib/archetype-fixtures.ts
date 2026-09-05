@@ -100,7 +100,7 @@ const BASE_AFTER_MORNING_ROUTINE: Partial<AfterMorningRoutineAnswers> & {
 } = {
   earlyCommitmentBreakfastFrequency: "sometimes",
   noEarlyCommitmentBreakfastFrequency: "sometimes",
-  nonBreakfastMealSource: "varies",
+  nonBreakfastMealSource: ["varies"],
   nonBreakfastSpendingFrequency: "sometimes",
   previousNightAffectsBreakfast: "it-depends",
   mealValuePerception: "not-sure-how-cost-works",
@@ -218,7 +218,7 @@ export const ALTERNATIVE_FORAGER_FIXTURE: ArchetypeFixture = {
       occasionalBreakfastFrequency: "never",
     }),
     afterMorningRoutine: mergeAfterMorningRoutine({
-      nonBreakfastMealSource: "order-online",
+      nonBreakfastMealSource: ["order-online"],
       nonBreakfastSpendingFrequency: "almost-always",
       influenceRatings: {
         canteenAvailabilityInfluence: "very-strongly",
