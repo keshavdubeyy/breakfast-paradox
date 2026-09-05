@@ -81,10 +81,9 @@ export const BEFORE_SLEEP_ACTIVITY_OPTIONS: SurveyOption[] = [
 ]
 
 export const MORNING_ACTIVITY_OPTIONS: SurveyOption[] = [
-  { value: "check-phone", label: "Check phone/messages" },
   { value: "get-ready", label: "Get ready" },
   { value: "study-work", label: "Study / work" },
-  { value: "exercise-sport", label: "Exercise / play a sport" },
+  { value: "exercise-sport", label: "Exercise / sport" },
   { value: "go-to-mess", label: "Go to the mess" },
   { value: "eat-in-room", label: "Eat or drink something in my room" },
   {
@@ -93,7 +92,7 @@ export const MORNING_ACTIVITY_OPTIONS: SurveyOption[] = [
   },
   {
     value: "go-to-class",
-    label: "Go directly to class / meeting / other commitment",
+    label: "Go directly to class / meeting / another commitment",
   },
   { value: "go-back-to-sleep", label: "Go back to sleep or rest" },
   { value: OTHER_ACTIVITY_VALUE, label: "Other" },
@@ -122,8 +121,6 @@ export const FREQUENCY_OPTIONS: SurveyOption[] = [
   { value: "rarely", label: "Rarely" },
   { value: "never", label: "Never" },
 ]
-
-export const RESALE_ACTION_VALUES = ["sell", "exchange", "give-away"] as const
 
 export const BREAKFAST_CHANGE_ACTION_OPTIONS: SurveyOption[] = [
   { value: "use-allotted", label: "Still use the allotted meal" },

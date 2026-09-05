@@ -7,7 +7,6 @@ import Link from "next/link"
 import { SurveyLayout } from "@/components/survey/survey-layout"
 import { QuestionBlock } from "@/components/survey/question-block"
 import { TimeRangeSelect } from "@/components/survey/time-range-select"
-import { RankList } from "@/components/survey/rank-list"
 import { useAutoAdvance } from "@/hooks/use-auto-advance"
 import { vibrateError } from "@/lib/haptics"
 import { Button } from "@/components/ui/button"
@@ -33,7 +32,6 @@ import {
   MESS_FOOD_QUALITY_OPTIONS,
   MORNING_ACTIVITY_OPTIONS,
   OTHER_ACTIVITY_VALUE,
-  RESALE_ACTION_VALUES,
   SLEEP_TIME_OPTIONS,
   WAKE_TIME_OPTIONS,
   type SurveyOption,
@@ -50,9 +48,10 @@ type RequiredFieldKey =
   | "messFoodQuality"
   | "breakfastPlanChangeFrequency"
   | "breakfastPlanChangeActions"
-  | "breakfastResaleSuccessRate"
   | "breakfastFrequency"
 
+// Every question block on the page, in the order they appear, so
+// auto-advance knows what "next" means.
 const FIELD_ORDER: RequiredFieldKey[] = [
   "sleepTime",
   "beforeSleepActivities",
@@ -63,27 +62,6 @@ const FIELD_ORDER: RequiredFieldKey[] = [
   "messFoodQuality",
   "breakfastPlanChangeFrequency",
   "breakfastPlanChangeActions",
-  "breakfastResaleSuccessRate",
-  "breakfastFrequency",
-]
-
-// Every question block on the page, in the order they appear, so
-// auto-advance knows what "next" means. "morningActivityOrder" (the
-// re-order list for Q4a) isn't a required field but still needs a slot.
-type BlockKey = RequiredFieldKey | "morningActivityOrder"
-
-const SCROLL_ORDER: BlockKey[] = [
-  "sleepTime",
-  "beforeSleepActivities",
-  "beforeSleepMostTime",
-  "wakeTime",
-  "morningActivities",
-  "morningActivityOrder",
-  "messDecision",
-  "messFoodQuality",
-  "breakfastPlanChangeFrequency",
-  "breakfastPlanChangeActions",
-  "breakfastResaleSuccessRate",
   "breakfastFrequency",
 ]
 
@@ -91,12 +69,6 @@ function showsBreakfastPlanChangeActions(values: UsualRoutineAnswers) {
   return (
     values.breakfastPlanChangeFrequency !== "" &&
     values.breakfastPlanChangeFrequency !== "never"
-  )
-}
-
-function showsBreakfastResaleSuccessRate(values: UsualRoutineAnswers) {
-  return values.breakfastPlanChangeActions.some((value) =>
-    (RESALE_ACTION_VALUES as readonly string[]).includes(value)
   )
 }
 
@@ -160,14 +132,6 @@ function validate(
     }
   }
 
-  if (
-    showsBreakfastPlanChangeActions(values) &&
-    showsBreakfastResaleSuccessRate(values) &&
-    !values.breakfastResaleSuccessRate
-  ) {
-    errors.breakfastResaleSuccessRate = "Please select an option."
-  }
-
   if (!values.breakfastFrequency) {
     errors.breakfastFrequency = "Please select an option."
   }
@@ -191,7 +155,8 @@ export default function UsualRoutinePage() {
     getUsualRoutineServerSnapshot
   )
   const [submitted, setSubmitted] = useState(false)
-  const { registerBlock, getBlock, advance } = useAutoAdvance<BlockKey>(SCROLL_ORDER)
+  const { registerBlock, getBlock, advance } =
+    useAutoAdvance<RequiredFieldKey>(FIELD_ORDER)
 
   const errors = useMemo(
     () => (submitted ? validate(values) : {}),
@@ -247,11 +212,6 @@ export default function UsualRoutinePage() {
     saveUsualRoutineAnswers({
       ...values,
       morningActivities: toggleValue(values.morningActivities, value, checked),
-      morningActivityOrder: toggleValue(
-        values.morningActivityOrder,
-        value,
-        checked
-      ),
     })
   }
 
@@ -266,9 +226,6 @@ export default function UsualRoutinePage() {
       breakfastPlanChangeActionOther: isNever
         ? ""
         : values.breakfastPlanChangeActionOther,
-      breakfastResaleSuccessRate: isNever
-        ? ""
-        : values.breakfastResaleSuccessRate,
     })
     advance("breakfastPlanChangeFrequency")
   }
@@ -287,20 +244,13 @@ export default function UsualRoutinePage() {
   }
 
   function updateBreakfastPlanChangeActions(value: string, checked: boolean) {
-    const nextActions = toggleValue(
-      values.breakfastPlanChangeActions,
-      value,
-      checked
-    )
-    const stillShowsResale = nextActions.some((item) =>
-      (RESALE_ACTION_VALUES as readonly string[]).includes(item)
-    )
     saveUsualRoutineAnswers({
       ...values,
-      breakfastPlanChangeActions: nextActions,
-      breakfastResaleSuccessRate: stillShowsResale
-        ? values.breakfastResaleSuccessRate
-        : "",
+      breakfastPlanChangeActions: toggleValue(
+        values.breakfastPlanChangeActions,
+        value,
+        checked
+      ),
     })
   }
 
@@ -323,14 +273,6 @@ export default function UsualRoutinePage() {
     // above — handled as its own section rather than inline here.
     router.push("/breakfast-routine")
   }
-
-  const morningActivityRankItems = values.morningActivityOrder.map((value) => ({
-    value,
-    label:
-      value === OTHER_ACTIVITY_VALUE && values.morningActivityOther.trim()
-        ? values.morningActivityOther.trim()
-        : optionLabel(MORNING_ACTIVITY_OPTIONS, value),
-  }))
 
   return (
     <SurveyLayout
@@ -555,22 +497,6 @@ export default function UsualRoutinePage() {
           )}
         </QuestionBlock>
 
-        {morningActivityRankItems.length > 1 ? (
-          <QuestionBlock
-            ref={registerBlock("morningActivityOrder")}
-            title="Arrange these in the order they normally happen."
-          >
-            {() => (
-              <RankList
-                items={morningActivityRankItems}
-                onReorder={(nextValues) =>
-                  updateField("morningActivityOrder", nextValues)
-                }
-              />
-            )}
-          </QuestionBlock>
-        ) : null}
-
         <QuestionBlock
           ref={registerBlock("messDecision")}
           title="How is the mess for your breakfast usually decided?"
@@ -727,43 +653,6 @@ export default function UsualRoutinePage() {
                   />
                 ) : null}
               </div>
-            )}
-          </QuestionBlock>
-        ) : null}
-
-        {showsBreakfastPlanChangeActions(values) &&
-        showsBreakfastResaleSuccessRate(values) ? (
-          <QuestionBlock
-            ref={registerBlock("breakfastResaleSuccessRate")}
-            title="When you try to sell, exchange, or give away your breakfast, how often are you able to find someone to take it?"
-            required
-            error={errors.breakfastResaleSuccessRate}
-          >
-            {({ describedBy }) => (
-              <RadioGroup
-                aria-describedby={describedBy}
-                aria-invalid={!!errors.breakfastResaleSuccessRate}
-                value={values.breakfastResaleSuccessRate}
-                onValueChange={(value) => {
-                  updateField("breakfastResaleSuccessRate", value as string)
-                  advance("breakfastResaleSuccessRate")
-                }}
-                className="gap-0"
-              >
-                {FREQUENCY_OPTIONS.map((option) => (
-                  <Label
-                    key={option.value}
-                    htmlFor={`breakfast-resale-success-${option.value}`}
-                    className="min-h-11 items-center gap-3 py-1 text-base font-normal text-foreground"
-                  >
-                    <RadioGroupItem
-                      id={`breakfast-resale-success-${option.value}`}
-                      value={option.value}
-                    />
-                    {option.label}
-                  </Label>
-                ))}
-              </RadioGroup>
             )}
           </QuestionBlock>
         ) : null}

@@ -33,13 +33,11 @@ Not a data question — a gate.
 | 2 | What do you usually spend time doing in the hours before you go to sleep? *(select all)* | Multi-select + Other | Studying, project work, internship/work, club activities, friends, content/gaming/social, late-night eating, exercise, personal tasks, Other | Yes | `beforeSleepActivities`, `beforeSleepActivityOther` | always |
 | 3 | Which of these usually takes up most of your time before you sleep? | Single-select (options = Q2's picks) | — | Yes | `beforeSleepMostTime` | Q2 has ≥1 selection |
 | 4 | Around what time do you generally wake up in the morning? | Time range (weekday+weekend) | Before 6:30am → After 10am, No consistent time | Yes | `wakeTimeWeekday/Weekend` | always |
-| 5 | On a typical weekday, which of the following are usually part of your morning after you wake up? *(select all)* | Multi-select + Other | Check phone, get ready, study/work, exercise, go to mess, eat in room, buy/order elsewhere, go to class, go back to sleep, Other | Yes | `morningActivities`, `morningActivityOther`, `morningActivityOrder` | always |
-| 5a | Arrange these in the order they normally happen. | Rank/reorder list | (Q5's picks) | No | `morningActivityOrder` | Q5 has ≥2 selections |
+| 5 | On a typical weekday, which of the following are usually part of your morning after you wake up? *(select all)* | Multi-select + Other | Get ready, study/work, exercise/sport, go to mess, eat in room, buy/order elsewhere, go to class/meeting/another commitment, go back to sleep, Other | Yes | `morningActivities`, `morningActivityOther` | always |
 | 6 | How is the mess for your breakfast usually decided? | Single-select | Self-registered, auto-allotted, mixed, not sure | Yes | `messDecision` | always |
 | 6a | How would you rate the food quality of the breakfast served at your mess? | Single-select | Very good → very poor, not enough experience | Yes | `messFoodQuality` | always |
 | 6b | How often does your breakfast plan change after it is already too late to cancel that meal? | Single-select | Almost always → Never | Yes | `breakfastPlanChangeFrequency` | always |
 | 6c | When that happens, what do you usually do? *(select all)* | Multi-select + Other | Still use it, exchange, sell, give away, buy others' meal, eat elsewhere, order online, leave unused, skip, Other | Yes | `breakfastPlanChangeActions`, `breakfastPlanChangeActionOther` | 6b ≠ "never" |
-| 6d | When you try to sell/exchange/give away your breakfast, how often can you find someone to take it? | Single-select | Almost always → Never | Yes | `breakfastResaleSuccessRate` | 6c shown **and** includes sell/exchange/give-away |
 | 7 | **In a typical week, how often do you usually eat breakfast at the mess?** | Single-select | Almost every day, Most days, Some days, Rarely, Never | Yes | `breakfastFrequency` | always — **this is the branch trigger** |
 
 ### 3. Breakfast Routine (`/breakfast-routine`) — branches on Q7 above
@@ -126,7 +124,7 @@ This is where "one survey" is misleading — the branch means Branch A, B, and C
 | Section | Always shown | Conditional (may or may not appear) | Range |
 |---|---|---|---|
 | About You | 5 | 0 | **5** (fixed) |
-| Usual Routine | 9 *(includes Q3, which is nominally conditional on Q2 having ≥1 pick — but Q2 itself requires ≥1 pick to submit, so Q3 is guaranteed in practice)* | Q5a (rank order, needs ≥2 picks in Q5), 6c (plan-change actions), 6d (resale success) | **9 – 12** |
+| Usual Routine | 9 *(includes Q3, which is nominally conditional on Q2 having ≥1 pick — but Q2 itself requires ≥1 pick to submit, so Q3 is guaranteed in practice)* | 6c (plan-change actions) | **9 – 10** |
 | Breakfast Routine — Branch A | 9 (A1,A2,A3,A4,A6,A8,A9,A11,A12) | A5, A7, A10 | **9 – 12** |
 | Breakfast Routine — Branch B | 6 (B1,B2,B3,B4,B5,B7) | B6 | **6 – 7** |
 | Breakfast Routine — Branch C | 6 (C1,C2,C3,C4,C7,C8) | C5+C6 (always appear together, same gate), C9 | **6 – 9** |
@@ -138,12 +136,12 @@ This is where "one survey" is misleading — the branch means Branch A, B, and C
 
 | Respondent path | Minimum | Maximum |
 |---|---|---|
-| **Branch A** (almost every day / most days) | **37** | **48** |
-| **Branch B** (some days) | **35** | **43** |
-| **Branch C** (rarely / never) | **34** | **45** |
+| **Branch A** (almost every day / most days) | **37** | **46** |
+| **Branch B** (some days) | **35** | **41** |
+| **Branch C** (rarely / never) | **34** | **43** |
 
 A few things worth knowing about that range:
-- The gap between min and max within a single branch (9–13 questions) is almost entirely driven by **whether prior answers open up follow-ups** — e.g., someone who says their breakfast plan "never" changes skips two questions in Usual Routine; someone who says it changes "often" and that they resell meals answers both.
+- The gap between min and max within a single branch (6–9 questions) is almost entirely driven by **whether prior answers open up follow-ups** — e.g., someone who says their breakfast plan "never" changes skips a question in Usual Routine that someone who says it changes "often" answers.
 - **Branch B respondents see the fewest questions overall** even though their own branch page is the shortest (6–7), because Branch B is the only branch for which the After-Morning-Routine comparison grid (Q11) is *unconditional* — they always see it, so their "always shown" floor there is one higher than Branch A/C's, but their branch-page floor is enough lower that their total floor still comes out lowest.
 - **Branch A tends to run longest**, since it's the only branch with 3 independently-triggerable conditionals (A5, A7, A10) stacked on top of an already-longer always-shown set (9 vs. 6 for B/C).
 - These ranges don't include the consent checkbox or the exit screen (neither collects a real answer), and don't count "Other" free-text reveals as separate questions.

@@ -86,7 +86,6 @@ const BASE_USUAL_ROUTINE: Partial<UsualRoutineAnswers> = {
   sleepTimeWeekend: "no-consistent-time",
   breakfastPlanChangeFrequency: "sometimes",
   breakfastPlanChangeActions: [],
-  breakfastResaleSuccessRate: "sometimes",
   breakfastFrequency: "most-days",
   breakfastMotivationFactors: [],
   occasionalBreakfastFrequency: "",

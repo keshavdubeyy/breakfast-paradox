@@ -19,13 +19,11 @@ export interface UsualRoutineAnswers {
   wakeTimeWeekend: string
   morningActivities: string[]
   morningActivityOther: string
-  morningActivityOrder: string[]
   messDecision: string
   messFoodQuality: string
   breakfastPlanChangeFrequency: string
   breakfastPlanChangeActions: string[]
   breakfastPlanChangeActionOther: string
-  breakfastResaleSuccessRate: string
   breakfastFrequency: string
 
   // Branch A: regular breakfast eaters (almost every day / most days)
@@ -144,13 +142,11 @@ export const defaultUsualRoutineAnswers: UsualRoutineAnswers = {
   wakeTimeWeekend: "",
   morningActivities: [],
   morningActivityOther: "",
-  morningActivityOrder: [],
   messDecision: "",
   messFoodQuality: "",
   breakfastPlanChangeFrequency: "",
   breakfastPlanChangeActions: [],
   breakfastPlanChangeActionOther: "",
-  breakfastResaleSuccessRate: "",
   breakfastFrequency: "",
 
   messBreakfastTime: "",
