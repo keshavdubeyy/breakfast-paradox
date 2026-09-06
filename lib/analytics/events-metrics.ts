@@ -159,6 +159,59 @@ export function computeKeyEventMetrics(rows: AnalyticsRow[]): KeyEventMetric[] {
   ]
 }
 
+// --- Redirect-destination breakdown, for the Iceberg Summary's "meals
+// left unused or redirected" headline — a plain-language "where did it
+// go" breakdown, not a new metric. The underlying answer comes from two
+// different multi-select fields depending on which branch a respondent
+// is in (breakfastPlanChangeActions for anyone whose plan changes,
+// unusedAllottedMealActions for branch C specifically), so a canonical
+// destination merges the semantically-equivalent values from both
+// fields into one bucket, tallied over the same `askedAboutUnusedMeals`
+// population computeKeyEventMetrics already uses for this card's own
+// percentage — same denominator, so the breakdown always adds up
+// consistently with the headline figure it supports. */
+export interface DestinationBucket {
+  label: string
+  count: number
+  percentage: number
+}
+
+const REDIRECT_DESTINATIONS: {
+  label: string
+  planChangeValues: string[]
+  unusedAllottedValues: string[]
+}[] = [
+  { label: "exchanged it with another student", planChangeValues: ["exchange"], unusedAllottedValues: ["exchange"] },
+  { label: "left it unused", planChangeValues: ["leave-unused"], unusedAllottedValues: ["leave-unused"] },
+  { label: "gave it away", planChangeValues: ["give-away"], unusedAllottedValues: ["give-away"] },
+  { label: "sold it", planChangeValues: ["sell"], unusedAllottedValues: ["sell"] },
+  { label: "took another student's allotted meal instead", planChangeValues: ["buy-others-meal"], unusedAllottedValues: [] },
+  { label: "tried to transfer it but sometimes couldn't", planChangeValues: [], unusedAllottedValues: ["try-transfer-sometimes-cant"] },
+]
+
+export function computeRedirectDestinationBreakdown(rows: AnalyticsRow[]): {
+  buckets: DestinationBucket[]
+  denominator: number
+} {
+  const askedAboutUnusedMeals = rows.filter(
+    (row) =>
+      row.breakfastPlanChangeActions.length > 0 ||
+      row.unusedAllottedMealActions.length > 0
+  )
+  const denominator = askedAboutUnusedMeals.length
+
+  const buckets = REDIRECT_DESTINATIONS.map((destination) => {
+    const count = askedAboutUnusedMeals.filter(
+      (row) =>
+        destination.planChangeValues.some((value) => row.breakfastPlanChangeActions.includes(value)) ||
+        destination.unusedAllottedValues.some((value) => row.unusedAllottedMealActions.includes(value))
+    ).length
+    return { label: destination.label, count, percentage: percentageOf(count, denominator) }
+  })
+
+  return { buckets, denominator }
+}
+
 // --- 8. Self-reported effects before lunch (comparisonRatings) --------
 
 const SCALE_POSITION: Record<string, number> = {

@@ -432,6 +432,14 @@ describe("Phase 2 registry extension — full closed-ended-field coverage", () =
     expect(getExplorerField("influenceRatings.attentionCheckInfluence")).toBeUndefined()
   })
 
+  it("registers weekend sleep/wake time as ordinal fields (previously collected but never analyzed anywhere)", () => {
+    const sleepWeekend = getExplorerField("sleepTimeWeekend")
+    const wakeWeekend = getExplorerField("wakeTimeWeekend")
+    expect(sleepWeekend?.type).toBe("ordinal")
+    expect(wakeWeekend?.type).toBe("ordinal")
+    expect(sleepWeekend?.getOrdinal?.(makeRow({ id: "1", sleepTimeWeekend: "before-11pm" }))).not.toBeNull()
+  })
+
   it("registers a real influence row and an agreement row", () => {
     expect(getExplorerField("influenceRatings.sleepAmountInfluence")).toBeDefined()
     expect(getExplorerField("agreementRatings.sleepOverBreakfastAgreement")).toBeDefined()

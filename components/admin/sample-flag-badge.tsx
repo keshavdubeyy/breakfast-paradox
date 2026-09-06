@@ -1,5 +1,15 @@
 import { Badge } from "@/components/ui/badge"
-import type { SampleFlag } from "@/lib/analytics/patterns/types"
+import { MIN_CELL_N, SMALL_SAMPLE_N, type SampleFlag } from "@/lib/analytics/patterns/types"
+
+/** Hover text for the two flags — the only place their meaning is
+ * explained, since a first-time viewer has no other way to tell these
+ * two similar-looking badges apart. Uses `title` (a native tooltip)
+ * rather than a custom component so every badge everywhere gets the
+ * explanation for free, with no per-page wiring. */
+const FLAG_EXPLANATION: Record<Exclude<SampleFlag, "ok">, string> = {
+  suppressed: `Suppressed: fewer than ${MIN_CELL_N} responses. The value is hidden, not just uncertain — with this few people, showing a number could reveal an individual's answer.`,
+  small: `Small sample: fewer than ${SMALL_SAMPLE_N} responses. The value is real and shown, but treat it as less reliable than a fully-sampled result.`,
+}
 
 /** The one place that decides how a sample-size flag is shown — every
  * Patterns chart/card/table renders suppression through this, rather
@@ -12,6 +22,7 @@ export function SampleFlagBadge({ flag }: { flag: SampleFlag }) {
     <Badge
       variant={flag === "suppressed" ? "destructive" : "outline"}
       className="ml-1.5 align-middle"
+      title={FLAG_EXPLANATION[flag]}
     >
       {flag === "suppressed" ? "suppressed" : "small sample"}
     </Badge>

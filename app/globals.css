@@ -124,6 +124,30 @@
     --diverging-positive: #2a78d6;
     --diverging-neutral: #f0efec;
 
+    /* --- Iceberg illustration (/admin/iceberg diagram view) — a fixed
+     * decorative palette, not data-encoding, so it's tuned by eye per
+     * theme rather than auto-derived. Grayscale rather than blue (the
+     * traced reference's own hue) — this dashboard is otherwise a
+     * restrained black/white/gray palette, so the illustration matches
+     * that instead of introducing the reference's blue. Seven steps,
+     * lightest to darkest, giving each facet role enough separation to
+     * read as distinct even with no stroke between them. */
+    --iceberg-ice-pale: #fafafa;
+    --iceberg-ice-base: #dedede;
+    --iceberg-ice-mid: #c7c7c7;
+    --iceberg-water-base: #363636;
+    --iceberg-water-mid: #454545;
+    --iceberg-water-deep: #474747;
+    --iceberg-water-shadow: #292929;
+
+    /* Fixed label ink for the three submerged labels (Patterns,
+     * Structures, Mental models) — always over a dark water facet in
+     * both themes, so this stays a bright, near-constant pair rather
+     * than tracking --foreground (which flips to near-black in light
+     * mode and would disappear against the dark water fills). */
+    --iceberg-label-ink: #f5f5f4;
+    --iceberg-label-ink-muted: #c9c9c6;
+
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.205 0 0);
@@ -196,6 +220,17 @@
     --diverging-negative: #e66767;
     --diverging-positive: #3987e5;
     --diverging-neutral: #383835;
+
+    --iceberg-ice-pale: #828282;
+    --iceberg-ice-base: #4f4f4f;
+    --iceberg-ice-mid: #666666;
+    --iceberg-water-base: #303030;
+    --iceberg-water-mid: #292929;
+    --iceberg-water-deep: #262626;
+    --iceberg-water-shadow: #212121;
+
+    --iceberg-label-ink: #f5f5f4;
+    --iceberg-label-ink-muted: #bdbdb9;
 }
 
 @layer base {

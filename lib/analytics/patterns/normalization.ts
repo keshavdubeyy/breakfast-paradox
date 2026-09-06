@@ -61,6 +61,17 @@ export function wakeScore(row: AnalyticsRow): number | null {
   return scoreOrdinal(row.wakeTimeWeekday, WAKE_TIME_SCALE)
 }
 
+/** Same category vocabulary as the weekday fields (SLEEP_TIME_SCALE/
+ * WAKE_TIME_SCALE) — the survey asks the identical time-bucket question,
+ * just for weekends. Previously collected but never scored anywhere. */
+export function weekendSleepScore(row: AnalyticsRow): number | null {
+  return scoreOrdinal(row.sleepTimeWeekend, SLEEP_TIME_SCALE)
+}
+
+export function weekendWakeScore(row: AnalyticsRow): number | null {
+  return scoreOrdinal(row.wakeTimeWeekend, WAKE_TIME_SCALE)
+}
+
 /** `not-applicable` is a real, meaningful answer (there is no such thing
  * as an early-commitment day for this respondent) — scoreOrdinal already
  * returns null for it (it's absent from GENERIC_FREQUENCY_SCALE), so it's

@@ -72,6 +72,8 @@ import {
   sleepScore,
   SUBSTANTIVE_INFLUENCE_ITEMS,
   wakeScore,
+  weekendSleepScore,
+  weekendWakeScore,
 } from "./normalization"
 import { MIN_CELL_N, sampleFlag, type SampleFlag } from "./types"
 
@@ -270,6 +272,30 @@ export const EXPLORER_FIELDS: ExplorerFieldMeta[] = [
     allowedAsY: true,
     getCategorical: (row) => row.wakeTimeWeekday,
     getOrdinal: wakeScore,
+    options: WAKE_TIME_OPTIONS,
+  },
+  {
+    key: "sleepTimeWeekend",
+    label: "Weekend sleep time",
+    type: "ordinal",
+    section: "Sleep & routine",
+    surveyVersions: "all",
+    allowedAsX: true,
+    allowedAsY: true,
+    getCategorical: (row) => row.sleepTimeWeekend,
+    getOrdinal: weekendSleepScore,
+    options: SLEEP_TIME_OPTIONS,
+  },
+  {
+    key: "wakeTimeWeekend",
+    label: "Weekend wake time",
+    type: "ordinal",
+    section: "Sleep & routine",
+    surveyVersions: "all",
+    allowedAsX: true,
+    allowedAsY: true,
+    getCategorical: (row) => row.wakeTimeWeekend,
+    getOrdinal: weekendWakeScore,
     options: WAKE_TIME_OPTIONS,
   },
   {
@@ -874,14 +900,14 @@ export function computeCrosstab(
   const cellCounts = new Map<string, number>()
   for (const [x, y] of pairs) {
     rowTotals.set(x, (rowTotals.get(x) ?? 0) + 1)
-    const cellKey = `${x} ${y}`
+    const cellKey = `${x} ${y}`
     cellCounts.set(cellKey, (cellCounts.get(cellKey) ?? 0) + 1)
   }
 
   const cells: CrosstabCell[] = []
   for (const x of xCategories) {
     for (const y of yCategories) {
-      const count = cellCounts.get(`${x} ${y}`) ?? 0
+      const count = cellCounts.get(`${x} ${y}`) ?? 0
       const rowTotal = rowTotals.get(x) ?? 0
       cells.push({
         xValue: x,

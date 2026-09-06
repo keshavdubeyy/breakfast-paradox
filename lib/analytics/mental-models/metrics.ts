@@ -13,6 +13,7 @@ import {
   ROUTINE_MINDSET_FROM_ABSENCE_REASON,
   ROUTINE_MINDSET_FROM_ROUTINE_DESCRIPTION,
   ROUTINE_MINDSET_OPTIONS,
+  TRADE_OFF_AGREEMENT_KEYS,
   type RoutineMindsetBucket,
 } from "./normalization"
 import {
@@ -67,6 +68,7 @@ function computeAgreementStatement(
   const getValue = (row: AnalyticsRow) => row.agreementRatings[item.key] ?? null
   const whole = buildWholeSampleDistribution(rows, getValue, AGREEMENT_SCALE_OPTIONS)
   const n = whole.eligibility.answered
+  const flag = sampleFlag(n)
   const agreeCount = whole.distribution
     .filter((bucket) => AGREE_VALUES.has(bucket.value))
     .reduce((sum, bucket) => sum + bucket.count, 0)
@@ -76,9 +78,13 @@ function computeAgreementStatement(
     label: item.label,
     shortLabel: AGREEMENT_SHORT_LABEL[item.key] ?? item.label,
     distribution: whole.distribution,
-    agreeShare: n === 0 ? null : percentageOf(agreeCount, n),
+    // Suppressed (n < MIN_CELL_N), not just n === 0 — a headline
+    // percentage built from a handful of respondents is exactly what
+    // suppression exists to prevent, same rule as every other summary
+    // figure on this page.
+    agreeShare: flag === "suppressed" ? null : percentageOf(agreeCount, n),
     n,
-    flag: sampleFlag(n),
+    flag,
   }
 }
 
@@ -223,10 +229,17 @@ export function computeMentalModelsSnapshot(
   const rankedStatements = [...agreementOverview.statements].sort(
     (a, b) => (b.agreeShare ?? -1) - (a.agreeShare ?? -1)
   )
+  // "Strongest trade-off" must rank only within the statements actually
+  // framed as a trade-off against breakfast — never fall back to
+  // "2nd most agreed overall", which could just as easily be a
+  // non-trade-off belief (see TRADE_OFF_AGREEMENT_KEYS for why).
+  const rankedTradeOffs = rankedStatements.filter((statement) =>
+    (TRADE_OFF_AGREEMENT_KEYS as readonly string[]).includes(statement.key)
+  )
 
   return {
     dominantBelief: topFactorFromStatement(rankedStatements[0]),
-    strongestTradeOff: topFactorFromStatement(rankedStatements[1]),
+    strongestTradeOff: topFactorFromStatement(rankedTradeOffs[0]),
     routineOrientation: topFactorFromDistribution(routineMindset),
     valuePerception: topFactorFromDistribution(valuePerception),
     topMotivation: topFactorFromDistribution(motivations),

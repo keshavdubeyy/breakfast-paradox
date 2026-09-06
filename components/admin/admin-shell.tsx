@@ -9,6 +9,7 @@ import {
   Brain01Icon,
   Layers01Icon,
   LayoutDashboardIcon,
+  MountainSnowIcon,
   TrendingUpIcon,
 } from "@hugeicons/core-free-icons"
 
@@ -66,6 +67,7 @@ const NAV_ITEMS = [
   { title: "Patterns", href: "/admin/patterns", icon: TrendingUpIcon },
   { title: "Structures", href: "/admin/structures", icon: Layers01Icon },
   { title: "Mental Models", href: "/admin/mental-models", icon: Brain01Icon },
+  { title: "Iceberg Summary", href: "/admin/iceberg", icon: MountainSnowIcon },
 ]
 
 interface AdminShellProps {

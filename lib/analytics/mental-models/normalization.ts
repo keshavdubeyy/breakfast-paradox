@@ -32,6 +32,26 @@ for (const item of AGREEMENT_STATEMENT_ITEMS) {
   }
 }
 
+/** Analyst judgment: of the 9 agreement statements, only these two are
+ * actually framed as "X matters more than breakfast" trade-offs — the
+ * other seven are general beliefs (planning, convenience, hunger cues,
+ * sunk cost) with no competing thing named. The "Strongest trade-off"
+ * snapshot card must rank only within this set, never fall back to
+ * "whichever statement is 2nd most agreed overall" — a non-trade-off
+ * belief ranking 2nd is entirely possible and would mislabel the card. */
+export const TRADE_OFF_AGREEMENT_KEYS = [
+  "sleepOverBreakfastAgreement",
+  "classOnTimeOverBreakfastAgreement",
+] as const
+
+for (const key of TRADE_OFF_AGREEMENT_KEYS) {
+  if (!(key in AGREEMENT_SHORT_LABEL)) {
+    throw new Error(
+      `lib/analytics/mental-models/normalization: TRADE_OFF_AGREEMENT_KEYS references unknown key "${key}"`
+    )
+  }
+}
+
 // --- Routine Mindset composite ------------------------------------------
 //
 // The survey asks "how would you describe your breakfast routine" in two
