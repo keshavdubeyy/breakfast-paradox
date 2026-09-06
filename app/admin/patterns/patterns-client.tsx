@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -68,6 +69,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { applyFilters } from "@/lib/analytics/filters"
 import { computeBranchDeepDive } from "@/lib/analytics/patterns/branch-deep-dive"
@@ -355,30 +357,57 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
 
       <SectionHeading>Core patterns</SectionHeading>
 
-      {/* --- Core Pattern 1 --- */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Early commitments × breakfast behaviour</CardTitle>
-          <CardDescription>
-            As early-commitment days per week rise, how does the breakfast
-            group composition shift? Each row totals ~100%.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <StackedPercentageBar
-            rows={earlyCommitmentBars}
-            segments={BRANCH_SEGMENTS}
-            rowHeaderLabel="Early-commitment days"
-            footnote={`n = ${metrics.earlyCommitmentsByBranch.eligibility.eligible} eligible · ${metrics.earlyCommitmentsByBranch.eligibility.answered} answered · ${metrics.earlyCommitmentsByBranch.eligibility.missing} missing`}
-          />
-          <DataDetailsDrawer>
-            <RowPercentageTableView
-              table={metrics.earlyCommitmentsByBranch}
+      {/* --- Core Patterns 1 & 3, side by side --- */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Early commitments × breakfast behaviour</CardTitle>
+            <CardDescription>
+              As early-commitment days per week rise, how does the breakfast
+              group composition shift? Each row totals ~100%.
+            </CardDescription>
+            <CardAction>
+              <DataDetailsDrawer title="Early commitments × breakfast behaviour">
+                <RowPercentageTableView
+                  table={metrics.earlyCommitmentsByBranch}
+                  rowHeaderLabel="Early-commitment days"
+                />
+              </DataDetailsDrawer>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <StackedPercentageBar
+              rows={earlyCommitmentBars}
+              segments={BRANCH_SEGMENTS}
               rowHeaderLabel="Early-commitment days"
+              footnote={`n = ${metrics.earlyCommitmentsByBranch.eligibility.eligible} eligible · ${metrics.earlyCommitmentsByBranch.eligibility.answered} answered · ${metrics.earlyCommitmentsByBranch.eligibility.missing} missing`}
             />
-          </DataDetailsDrawer>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* --- Core Pattern 3 --- */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Weekday sleep time × breakfast behaviour</CardTitle>
+            <CardAction>
+              <DataDetailsDrawer title="Weekday sleep time × breakfast behaviour">
+                <RowPercentageTableView table={metrics.sleepByBranch} rowHeaderLabel="Weekday sleep time" />
+              </DataDetailsDrawer>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <StackedPercentageBar
+              rows={sleepBars}
+              segments={BRANCH_SEGMENTS}
+              rowHeaderLabel="Weekday sleep time"
+            />
+            <SpearmanNote
+              association={metrics.sleepAssociation}
+              n={metrics.sleepByBranch.eligibility.answered}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* --- Core Pattern 2 --- */}
       <Card>
@@ -405,31 +434,15 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
         </CardContent>
       </Card>
 
-      {/* --- Core Pattern 3 --- */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Weekday sleep time × breakfast behaviour</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <StackedPercentageBar
-            rows={sleepBars}
-            segments={BRANCH_SEGMENTS}
-            rowHeaderLabel="Weekday sleep time"
-          />
-          <SpearmanNote
-            association={metrics.sleepAssociation}
-            n={metrics.sleepByBranch.eligibility.answered}
-          />
-          <DataDetailsDrawer>
-            <RowPercentageTableView table={metrics.sleepByBranch} rowHeaderLabel="Weekday sleep time" />
-          </DataDetailsDrawer>
-        </CardContent>
-      </Card>
-
       {/* --- Core Pattern 4 --- */}
       <Card>
         <CardHeader>
           <CardTitle>Weekday wake time × breakfast behaviour</CardTitle>
+          <CardAction>
+            <DataDetailsDrawer title="Weekday wake time × breakfast behaviour">
+              <RowPercentageTableView table={metrics.wakeByBranch} rowHeaderLabel="Weekday wake time" />
+            </DataDetailsDrawer>
+          </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <StackedPercentageBar
@@ -441,160 +454,221 @@ export function PatternsClient({ rows, isSampleData }: PatternsClientProps) {
             association={metrics.wakeAssociation}
             n={metrics.wakeByBranch.eligibility.answered}
           />
-          <DataDetailsDrawer>
-            <RowPercentageTableView table={metrics.wakeByBranch} rowHeaderLabel="Weekday wake time" />
-          </DataDetailsDrawer>
         </CardContent>
       </Card>
 
       <SectionHeading>Deeper patterns</SectionHeading>
 
-      {/* --- Phase 2: deeper modules, kept collapsible rather than a wall of charts --- */}
-      <Accordion defaultValue={["influence-matrix"]}>
-        <AccordionItem value="influence-matrix">
-          <AccordionTrigger>Structural influence × breakfast behaviour</AccordionTrigger>
-          <AccordionContent>
-            <p className="mb-3 text-sm text-muted-foreground">
-              For each structural factor (sleep, class schedule, mess allocation,
-              distance, and more), what share of each branch says it influences
-              their breakfast decisions &quot;a lot&quot; or &quot;very
-              strongly&quot;? Sorted by the largest cross-branch gap first.
-            </p>
-            <HeatmapMatrix
-              rows={influenceHeatmapRows as unknown as HeatmapRowData[]}
-              columns={BRANCH_COLUMNS}
-              rowHeaderLabel="Structural factor"
-              sortable
-            />
-            <DataDetailsDrawer>
-              <LikertMatrixTable matrix={metrics.influenceMatrix} itemHeaderLabel="Structural factor" />
-            </DataDetailsDrawer>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="agreement-matrix">
-          <AccordionTrigger>Mental model × breakfast behaviour</AccordionTrigger>
-          <AccordionContent>
-            <p className="mb-3 text-sm text-muted-foreground">
-              For each belief statement, what share of each branch agrees or
-              strongly agrees? Compares what people believe about breakfast
-              against what they actually do.
-            </p>
-            <HeatmapMatrix
-              rows={agreementHeatmapRows as unknown as HeatmapRowData[]}
-              columns={BRANCH_COLUMNS}
-              rowHeaderLabel="Belief statement"
-              sortable
-            />
-            <DataDetailsDrawer>
-              <LikertMatrixTable matrix={metrics.agreementMatrix} itemHeaderLabel="Belief statement" />
-            </DataDetailsDrawer>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="outcome-matrix">
-          <AccordionTrigger>Reported energy, concentration &amp; hunger outcomes</AccordionTrigger>
-          <AccordionContent>
-            <p className="mb-3 text-sm text-muted-foreground">
-              Self-reported effects before lunch, compared across branches, on
-              a -2 (much lower than usual) to +2 (much higher) scale.
-            </p>
-            <CenteredDotPlot
-              rows={outcomeDotRows.map((row): DotPlotRowData => ({
-                ...row,
-                caption: COMPARISON_ROW_ITEMS.find((item) => item.key === row.key)?.helperText,
-              }))}
-              series={BRANCH_SEGMENTS}
-              domain={[-2, 2]}
-              centerValue={0}
-              domainLabels={["Much lower than usual", "Much higher than usual"]}
-            />
-            <DataDetailsDrawer>
-              <LikertMatrixTable
-                matrix={metrics.outcomeMatrix}
-                itemHeaderLabel="Outcome"
-                scaleDescription="Scale: -2 (much lower than usual) to +2 (much higher)."
+      {/* --- Phase 2: deeper modules, one at a time via tabs rather than a long accordion --- */}
+      <Tabs defaultValue="influence-matrix" className="w-full">
+        <div className="overflow-x-auto">
+          <TabsList className="w-max">
+            <TabsTrigger value="influence-matrix">Structural influence</TabsTrigger>
+            <TabsTrigger value="agreement-matrix">Mental model</TabsTrigger>
+            <TabsTrigger value="outcome-matrix">Outcomes</TabsTrigger>
+            <TabsTrigger value="archetype-relationships">Archetype</TabsTrigger>
+            <TabsTrigger value="branch-deep-dives">Branch deep dives</TabsTrigger>
+            <TabsTrigger value="before-sleep-morning-routine">Before-sleep &amp; routine</TabsTrigger>
+            <TabsTrigger value="weekend-previous-night">Weekend &amp; spillover</TabsTrigger>
+            <TabsTrigger value="plan-stability">Plan stability</TabsTrigger>
+            <TabsTrigger value="alt-food-spending">Alt. food &amp; spending</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="influence-matrix" className="pt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Structural influence × breakfast behaviour</CardTitle>
+              <CardDescription>
+                For each structural factor (sleep, class schedule, mess allocation,
+                distance, and more), what share of each branch says it influences
+                their breakfast decisions &quot;a lot&quot; or &quot;very
+                strongly&quot;? Sorted by the largest cross-branch gap first.
+              </CardDescription>
+              <CardAction>
+                <DataDetailsDrawer title="Structural influence × breakfast behaviour">
+                  <LikertMatrixTable matrix={metrics.influenceMatrix} itemHeaderLabel="Structural factor" />
+                </DataDetailsDrawer>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <HeatmapMatrix
+                rows={influenceHeatmapRows as unknown as HeatmapRowData[]}
+                columns={BRANCH_COLUMNS}
+                rowHeaderLabel="Structural factor"
+                sortable
               />
-            </DataDetailsDrawer>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="archetype-relationships">
-          <AccordionTrigger>Archetype × breakfast behaviour</AccordionTrigger>
-          <AccordionContent>
-            <p className="mb-3 text-sm text-muted-foreground">
-              Does the quiz-derived archetype track with actual breakfast
-              branch? A strong association here is expected — the archetype
-              is built from related survey answers — but it&apos;s a useful
-              sanity check on whether the archetype model lines up with
-              observed behaviour.
-            </p>
-            <FieldByBranchList rows={filteredRows} fieldKeys={["primaryArchetype"]} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="branch-deep-dives">
-          <AccordionTrigger>Branch deep dives</AccordionTrigger>
-          <AccordionContent>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Each branch has its own follow-up questions, only ever asked of
-              that branch&apos;s respondents — these are plain within-branch
-              breakdowns, not cross-branch comparisons.
-            </p>
-            <Accordion>
-              {branchDeepDives.map((deepDive) => (
-                <AccordionItem key={deepDive.branch} value={`branch-${deepDive.branch}`}>
-                  <AccordionTrigger>{BRANCH_LABELS[deepDive.branch]}</AccordionTrigger>
-                  <AccordionContent>
-                    <BranchDeepDiveView fields={deepDive.fields} />
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="before-sleep-morning-routine">
-          <AccordionTrigger>Before-sleep &amp; morning routine</AccordionTrigger>
-          <AccordionContent>
-            <FieldByBranchList
-              rows={filteredRows}
-              fieldKeys={["beforeSleepMostTime", "beforeSleepActivities", "morningActivities"]}
-            />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="weekend-previous-night">
-          <AccordionTrigger>Weekend &amp; previous-night spillover</AccordionTrigger>
-          <AccordionContent>
-            <FieldByBranchList
-              rows={filteredRows}
-              fieldKeys={[
-                "previousNightAffectsBreakfast",
-                "previousNightFactors",
-                "weekendDifferentiators",
-              ]}
-            />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="plan-stability">
-          <AccordionTrigger>Plan stability</AccordionTrigger>
-          <AccordionContent>
-            <FieldByBranchList
-              rows={filteredRows}
-              fieldKeys={["breakfastPlanChangeFrequency", "breakfastPlanChangeActions"]}
-            />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="alt-food-spending">
-          <AccordionTrigger>Alternative food &amp; spending</AccordionTrigger>
-          <AccordionContent>
-            <FieldByBranchList
-              rows={filteredRows}
-              fieldKeys={[
-                "nonBreakfastMealSource",
-                "nextFoodTime",
-                "nonBreakfastSpendingFrequency",
-                "nonBreakfastSpendingAmount",
-              ]}
-            />
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="agreement-matrix" className="pt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mental model × breakfast behaviour</CardTitle>
+              <CardDescription>
+                For each belief statement, what share of each branch agrees or
+                strongly agrees? Compares what people believe about breakfast
+                against what they actually do.
+              </CardDescription>
+              <CardAction>
+                <DataDetailsDrawer title="Mental model × breakfast behaviour">
+                  <LikertMatrixTable matrix={metrics.agreementMatrix} itemHeaderLabel="Belief statement" />
+                </DataDetailsDrawer>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <HeatmapMatrix
+                rows={agreementHeatmapRows as unknown as HeatmapRowData[]}
+                columns={BRANCH_COLUMNS}
+                rowHeaderLabel="Belief statement"
+                sortable
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="outcome-matrix" className="pt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Reported energy, concentration &amp; hunger outcomes</CardTitle>
+              <CardDescription>
+                Self-reported effects before lunch, compared across branches, on
+                a -2 (much lower than usual) to +2 (much higher) scale.
+              </CardDescription>
+              <CardAction>
+                <DataDetailsDrawer title="Reported energy, concentration & hunger outcomes">
+                  <LikertMatrixTable
+                    matrix={metrics.outcomeMatrix}
+                    itemHeaderLabel="Outcome"
+                    scaleDescription="Scale: -2 (much lower than usual) to +2 (much higher)."
+                  />
+                </DataDetailsDrawer>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <CenteredDotPlot
+                rows={outcomeDotRows.map((row): DotPlotRowData => ({
+                  ...row,
+                  caption: COMPARISON_ROW_ITEMS.find((item) => item.key === row.key)?.helperText,
+                }))}
+                series={BRANCH_SEGMENTS}
+                domain={[-2, 2]}
+                centerValue={0}
+                domainLabels={["Much lower than usual", "Much higher than usual"]}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="archetype-relationships" className="pt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Archetype × breakfast behaviour</CardTitle>
+              <CardDescription>
+                Does the quiz-derived archetype track with actual breakfast
+                branch? A strong association here is expected — the archetype
+                is built from related survey answers — but it&apos;s a useful
+                sanity check on whether the archetype model lines up with
+                observed behaviour.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FieldByBranchList rows={filteredRows} fieldKeys={["primaryArchetype"]} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="branch-deep-dives" className="pt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Branch deep dives</CardTitle>
+              <CardDescription>
+                Each branch has its own follow-up questions, only ever asked of
+                that branch&apos;s respondents — these are plain within-branch
+                breakdowns, not cross-branch comparisons.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion>
+                {branchDeepDives.map((deepDive) => (
+                  <AccordionItem key={deepDive.branch} value={`branch-${deepDive.branch}`}>
+                    <AccordionTrigger>{BRANCH_LABELS[deepDive.branch]}</AccordionTrigger>
+                    <AccordionContent>
+                      <BranchDeepDiveView fields={deepDive.fields} />
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="before-sleep-morning-routine" className="pt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Before-sleep &amp; morning routine</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FieldByBranchList
+                rows={filteredRows}
+                fieldKeys={["beforeSleepMostTime", "beforeSleepActivities", "morningActivities"]}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="weekend-previous-night" className="pt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekend &amp; previous-night spillover</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FieldByBranchList
+                rows={filteredRows}
+                fieldKeys={[
+                  "previousNightAffectsBreakfast",
+                  "previousNightFactors",
+                  "weekendDifferentiators",
+                ]}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="plan-stability" className="pt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Plan stability</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FieldByBranchList
+                rows={filteredRows}
+                fieldKeys={["breakfastPlanChangeFrequency", "breakfastPlanChangeActions"]}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="alt-food-spending" className="pt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Alternative food &amp; spending</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FieldByBranchList
+                rows={filteredRows}
+                fieldKeys={[
+                  "nonBreakfastMealSource",
+                  "nextFoodTime",
+                  "nonBreakfastSpendingFrequency",
+                  "nonBreakfastSpendingAmount",
+                ]}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* --- Pattern Explorer --- */}
       <Card>
@@ -817,6 +891,41 @@ function ExplorerResultView({ result }: { result: ExplorerResult }) {
 
     return (
       <div className="flex flex-col gap-2">
+        <div className="flex justify-end">
+          <DataDetailsDrawer title={`${result.xLabel} × ${result.yLabel}`}>
+            <div className="overflow-x-auto rounded-lg border border-border/60">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{result.xLabel}</TableHead>
+                    {result.yCategories.map((y) => (
+                      <TableHead key={y} className="text-right">
+                        {result.yCategoryLabels[y] ?? y}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {result.xCategories.map((x) => (
+                    <TableRow key={x}>
+                      <TableCell className="font-medium text-foreground">
+                        {result.xCategoryLabels[x] ?? x}
+                      </TableCell>
+                      {result.yCategories.map((y) => {
+                        const cell = result.cells.find((c) => c.xValue === x && c.yValue === y)
+                        return (
+                          <TableCell key={y} className="text-right tabular-nums">
+                            {cell ? `${cell.rowPercentage}%` : "—"}
+                          </TableCell>
+                        )
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </DataDetailsDrawer>
+        </div>
         {useHeatmap ? (
           <HeatmapMatrix
             rows={result.xCategories.map((x) => {
@@ -850,39 +959,6 @@ function ExplorerResultView({ result }: { result: ExplorerResult }) {
             association may be unstable.
           </p>
         ) : null}
-        <DataDetailsDrawer>
-          <div className="overflow-x-auto rounded-lg border border-border/60">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{result.xLabel}</TableHead>
-                  {result.yCategories.map((y) => (
-                    <TableHead key={y} className="text-right">
-                      {result.yCategoryLabels[y] ?? y}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.xCategories.map((x) => (
-                  <TableRow key={x}>
-                    <TableCell className="font-medium text-foreground">
-                      {result.xCategoryLabels[x] ?? x}
-                    </TableCell>
-                    {result.yCategories.map((y) => {
-                      const cell = result.cells.find((c) => c.xValue === x && c.yValue === y)
-                      return (
-                        <TableCell key={y} className="text-right tabular-nums">
-                          {cell ? `${cell.rowPercentage}%` : "—"}
-                        </TableCell>
-                      )
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </DataDetailsDrawer>
       </div>
     )
   }
@@ -919,6 +995,49 @@ function ExplorerResultView({ result }: { result: ExplorerResult }) {
 
     return (
       <div className="flex flex-col gap-2">
+        <div className="flex justify-end">
+          <DataDetailsDrawer title={`${result.groupLabel} × ${result.valueLabel}`}>
+            <div className="overflow-x-auto rounded-lg border border-border/60">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{result.groupLabel}</TableHead>
+                    <TableHead className="text-right">Median {result.valueLabel}</TableHead>
+                    <TableHead className="text-right">Mean</TableHead>
+                    <TableHead className="text-right">n</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {result.rows.map((row) => (
+                    <TableRow key={row.group}>
+                      <TableCell className="font-medium text-foreground">
+                        {result.groupLabels[row.group] ?? row.group}
+                      </TableCell>
+                      {shouldShowValue(row.flag) ? (
+                        <>
+                          <TableCell className="text-right tabular-nums font-medium">
+                            {row.median ?? "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+                            {row.mean !== null ? row.mean.toFixed(2) : "—"}
+                          </TableCell>
+                        </>
+                      ) : (
+                        <TableCell colSpan={2} className="text-center text-xs text-muted-foreground">
+                          Not enough responses
+                        </TableCell>
+                      )}
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {row.n}
+                        <SampleFlagBadge flag={row.flag} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </DataDetailsDrawer>
+        </div>
         <CenteredDotPlot
           rows={[
             {
@@ -941,47 +1060,6 @@ function ExplorerResultView({ result }: { result: ExplorerResult }) {
           shown on hover only, since equal category intervals aren&apos;t
           guaranteed to be equal psychologically.
         </p>
-        <DataDetailsDrawer>
-          <div className="overflow-x-auto rounded-lg border border-border/60">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{result.groupLabel}</TableHead>
-                  <TableHead className="text-right">Median {result.valueLabel}</TableHead>
-                  <TableHead className="text-right">Mean</TableHead>
-                  <TableHead className="text-right">n</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.rows.map((row) => (
-                  <TableRow key={row.group}>
-                    <TableCell className="font-medium text-foreground">
-                      {result.groupLabels[row.group] ?? row.group}
-                    </TableCell>
-                    {shouldShowValue(row.flag) ? (
-                      <>
-                        <TableCell className="text-right tabular-nums font-medium">
-                          {row.median ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
-                          {row.mean !== null ? row.mean.toFixed(2) : "—"}
-                        </TableCell>
-                      </>
-                    ) : (
-                      <TableCell colSpan={2} className="text-center text-xs text-muted-foreground">
-                        Not enough responses
-                      </TableCell>
-                    )}
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {row.n}
-                      <SampleFlagBadge flag={row.flag} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </DataDetailsDrawer>
       </div>
     )
   }
@@ -989,6 +1067,52 @@ function ExplorerResultView({ result }: { result: ExplorerResult }) {
   if (result.method === "prevalence-by-group") {
     return (
       <div className="flex flex-col gap-2">
+        <div className="flex justify-end">
+          <DataDetailsDrawer title={`${result.groupLabel} × ${result.optionLabel}`}>
+            <div className="overflow-x-auto rounded-lg border border-border/60">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{result.groupLabel}</TableHead>
+                    {result.options.map((option) => (
+                      <TableHead key={option.value} className="text-right">
+                        {option.label}
+                      </TableHead>
+                    ))}
+                    <TableHead className="text-right">n</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {result.rows.map((row) => (
+                    <TableRow key={row.group}>
+                      <TableCell className="font-medium text-foreground">
+                        {result.groupLabels[row.group] ?? row.group}
+                      </TableCell>
+                      {shouldShowValue(row.flag) ? (
+                        result.options.map((option) => (
+                          <TableCell key={option.value} className="text-right tabular-nums">
+                            {row.percentageByOption[option.value]}%
+                          </TableCell>
+                        ))
+                      ) : (
+                        <TableCell
+                          colSpan={result.options.length}
+                          className="text-center text-xs text-muted-foreground"
+                        >
+                          Not enough responses
+                        </TableCell>
+                      )}
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {row.n}
+                        <SampleFlagBadge flag={row.flag} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </DataDetailsDrawer>
+        </div>
         <HeatmapMatrix
           rows={result.rows.map((row) => {
             const cells: HeatmapRowData["cells"] = {}
@@ -1005,50 +1129,6 @@ function ExplorerResultView({ result }: { result: ExplorerResult }) {
           rowHeaderLabel={result.groupLabel}
           caption="Multiple selections were allowed — percentages don't need to sum to 100%."
         />
-        <DataDetailsDrawer>
-          <div className="overflow-x-auto rounded-lg border border-border/60">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{result.groupLabel}</TableHead>
-                  {result.options.map((option) => (
-                    <TableHead key={option.value} className="text-right">
-                      {option.label}
-                    </TableHead>
-                  ))}
-                  <TableHead className="text-right">n</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.rows.map((row) => (
-                  <TableRow key={row.group}>
-                    <TableCell className="font-medium text-foreground">
-                      {result.groupLabels[row.group] ?? row.group}
-                    </TableCell>
-                    {shouldShowValue(row.flag) ? (
-                      result.options.map((option) => (
-                        <TableCell key={option.value} className="text-right tabular-nums">
-                          {row.percentageByOption[option.value]}%
-                        </TableCell>
-                      ))
-                    ) : (
-                      <TableCell
-                        colSpan={result.options.length}
-                        className="text-center text-xs text-muted-foreground"
-                      >
-                        Not enough responses
-                      </TableCell>
-                    )}
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {row.n}
-                      <SampleFlagBadge flag={row.flag} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </DataDetailsDrawer>
       </div>
     )
   }
