@@ -59,16 +59,13 @@ import { logout } from "@/app/admin/login/actions"
 
 const CONTRIBUTORS = ["Keshav Dubey", "Aasritha Kalluri", "Rahul Chand"]
 
-// The iceberg model this dashboard is organized around — Overview,
-// Events, and Patterns are built so far; the rest are listed (disabled)
-// so the intended shape of the whole dashboard is visible from day one,
-// not just from documentation.
+// The iceberg model this dashboard is organized around.
 const NAV_ITEMS = [
   { title: "Overview", href: "/admin/overview", icon: LayoutDashboardIcon },
   { title: "Events", href: "/admin/events", icon: Activity01Icon },
   { title: "Patterns", href: "/admin/patterns", icon: TrendingUpIcon },
-  { title: "Structures", href: "/admin/structures", icon: Layers01Icon, disabled: true },
-  { title: "Mental Models", href: "/admin/mental-models", icon: Brain01Icon, disabled: true },
+  { title: "Structures", href: "/admin/structures", icon: Layers01Icon },
+  { title: "Mental Models", href: "/admin/mental-models", icon: Brain01Icon },
 ]
 
 interface AdminShellProps {
@@ -96,21 +93,8 @@ export function AdminShell({ children }: AdminShellProps) {
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       isActive={pathname.startsWith(item.href)}
-                      aria-disabled={item.disabled}
-                      // Not the native `disabled` prop: SidebarMenuButton
-                      // wraps a disabled item in a TooltipTrigger (since
-                      // `tooltip` is set below), and that wrapper consumes
-                      // `disabled` for its own open/close logic rather
-                      // than forwarding it to the underlying button — so
-                      // the visual/interactive disabling is done by hand
-                      // here instead.
-                      className={
-                        item.disabled ? "pointer-events-none opacity-50" : undefined
-                      }
-                      tooltip={item.disabled ? `${item.title} (coming soon)` : item.title}
-                      render={
-                        item.disabled ? undefined : <Link href={item.href} />
-                      }
+                      tooltip={item.title}
+                      render={<Link href={item.href} />}
                     >
                       <HugeiconsIcon icon={item.icon} strokeWidth={2} />
                       <span>{item.title}</span>
