@@ -528,7 +528,7 @@ export function IcebergClient({ rows, isSampleData }: IcebergClientProps) {
             {activeView === "diagram" ? (
               <div
                 ref={rightScrollRef}
-                className="flex flex-col gap-6 overflow-y-auto scroll-smooth"
+                className="no-scrollbar flex flex-col gap-6 overflow-y-auto scroll-smooth"
                 style={diagramHeight ? { height: diagramHeight } : undefined}
               >
                 <div ref={(el) => { sectionRefs.current.events = el }}>
