@@ -96,11 +96,9 @@ export function EventsClient({ rows, isSampleData }: EventsClientProps) {
     () => Array.from(new Set(rows.map((row) => row.surveyVersion))).sort((a, b) => b - a),
     [rows]
   )
-  const latestSurveyVersion = surveyVersions[0] ?? "all"
-
+  // Defaults to "all" survey versions — see overview-client.tsx for why.
   const [filters, setFilters] = useState<AnalyticsFilters>(() => ({
     ...DEFAULT_FILTERS,
-    surveyVersion: latestSurveyVersion,
   }))
   const [draftFilters, setDraftFilters] = useState<AnalyticsFilters>(filters)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
@@ -199,9 +197,7 @@ export function EventsClient({ rows, isSampleData }: EventsClientProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  setDraftFilters({ ...DEFAULT_FILTERS, surveyVersion: latestSurveyVersion })
-                }
+                onClick={() => setDraftFilters(DEFAULT_FILTERS)}
               >
                 Reset
               </Button>

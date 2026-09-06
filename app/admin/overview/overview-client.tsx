@@ -70,11 +70,13 @@ export function OverviewClient({ rows, isSampleData }: OverviewClientProps) {
       ),
     [rows]
   )
-  const latestSurveyVersion = surveyVersions[0] ?? "all"
-
+  // Defaults to "all" survey versions — a version bump is often a minor,
+  // backward-compatible field change (see lib/analytics/parse.ts), not a
+  // survey redesign, so hiding every older response by default would
+  // silently drop most of the data the moment a single new-version
+  // response comes in.
   const [filters, setFilters] = useState<AnalyticsFilters>(() => ({
     ...DEFAULT_FILTERS,
-    surveyVersion: latestSurveyVersion,
   }))
 
   // The sheet edits a draft copy — nothing in `filters` (and so nothing
@@ -182,12 +184,7 @@ export function OverviewClient({ rows, isSampleData }: OverviewClientProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  setDraftFilters({
-                    ...DEFAULT_FILTERS,
-                    surveyVersion: latestSurveyVersion,
-                  })
-                }
+                onClick={() => setDraftFilters(DEFAULT_FILTERS)}
               >
                 Reset
               </Button>
