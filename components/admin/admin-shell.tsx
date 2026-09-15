@@ -7,10 +7,12 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Activity01Icon,
   Brain01Icon,
+  CroissantIcon,
   Layers01Icon,
   LayoutDashboardIcon,
   MountainSnowIcon,
   TrendingUpIcon,
+  UniversityIcon,
 } from "@hugeicons/core-free-icons"
 
 import {
@@ -68,6 +70,8 @@ const NAV_ITEMS = [
   { title: "Structures", href: "/admin/structures", icon: Layers01Icon },
   { title: "Mental Models", href: "/admin/mental-models", icon: Brain01Icon },
   { title: "Iceberg Summary", href: "/admin/iceberg", icon: MountainSnowIcon },
+  { title: "Administration", href: "/admin/administration", icon: UniversityIcon },
+  { title: "Mess Attendance", href: "/admin/mess-attendance", icon: CroissantIcon },
 ]
 
 interface AdminShellProps {
