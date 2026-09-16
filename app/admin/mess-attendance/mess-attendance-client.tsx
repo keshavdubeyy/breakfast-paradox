@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 
 import {
   Card,
@@ -16,6 +16,13 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Table,
   TableBody,
   TableCell,
@@ -30,6 +37,17 @@ import { DailyTrendChart } from "@/components/admin/mess-attendance/daily-trend-
 import { RushHourChart } from "@/components/admin/mess-attendance/rush-hour-chart"
 import { RateBarChart, type RateBarDatum } from "@/components/admin/mess-attendance/rate-bar-chart"
 
+type Granularity = "day" | "week" | "month"
+
+const WEEK_OPTIONS = [1, 2, 3, 4] as const
+
+/** Week N of the month = calendar days [7*(N-1)+1, 7*N], with week 4
+ * open-ended to absorb the trailing days of longer months. */
+function weekOfMonth(mealDate: string): number {
+  const dayOfMonth = Number(mealDate.slice(8, 10))
+  return Math.min(4, Math.ceil(dayOfMonth / 7))
+}
+
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
@@ -42,13 +60,40 @@ function formatCount(value: number): string {
   return value.toLocaleString("en-IN")
 }
 
+function formatDateLabel(isoDate: string): string {
+  return new Date(`${isoDate}T00:00:00`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  })
+}
+
 interface MessAttendanceClientProps {
   rows: MessAttendanceRow[]
   isConfigured: boolean
 }
 
 export function MessAttendanceClient({ rows, isConfigured }: MessAttendanceClientProps) {
-  const metrics = useMemo(() => computeMessAttendanceMetrics(rows), [rows])
+  const [granularity, setGranularity] = useState<Granularity>("month")
+  const [selectedWeek, setSelectedWeek] = useState<(typeof WEEK_OPTIONS)[number]>(1)
+
+  const availableDates = useMemo(
+    () => Array.from(new Set(rows.map((row) => row.mealDate))).sort(),
+    [rows]
+  )
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const effectiveDate = selectedDate ?? availableDates[0] ?? null
+
+  const filteredRows = useMemo(() => {
+    if (granularity === "day") {
+      return effectiveDate ? rows.filter((row) => row.mealDate === effectiveDate) : []
+    }
+    if (granularity === "week") {
+      return rows.filter((row) => weekOfMonth(row.mealDate) === selectedWeek)
+    }
+    return rows
+  }, [rows, granularity, selectedWeek, effectiveDate])
+
+  const metrics = useMemo(() => computeMessAttendanceMetrics(filteredRows), [filteredRows])
 
   if (!isConfigured) {
     return (
@@ -108,6 +153,75 @@ export function MessAttendanceClient({ rows, isConfigured }: MessAttendanceClien
           anonymous student survey, only shown alongside it for context.
         </p>
       </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Select
+          value={granularity}
+          onValueChange={(value) => setGranularity(value as Granularity)}
+        >
+          <SelectTrigger>
+            <SelectValue>
+              {(value: string) =>
+                value === "day" ? "1 day" : value === "week" ? "7 days" : "Month"
+              }
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="day">1 day</SelectItem>
+            <SelectItem value="week">7 days</SelectItem>
+            <SelectItem value="month">Month</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {granularity === "week" && (
+          <Select
+            value={String(selectedWeek)}
+            onValueChange={(value) =>
+              setSelectedWeek(Number(value) as (typeof WEEK_OPTIONS)[number])
+            }
+          >
+            <SelectTrigger>
+              <SelectValue>{(value: string) => `Week ${value}`}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {WEEK_OPTIONS.map((week) => (
+                <SelectItem key={week} value={String(week)}>
+                  Week {week}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {granularity === "day" && (
+          <Select
+            value={effectiveDate ?? undefined}
+            onValueChange={(value) => setSelectedDate(value)}
+          >
+            <SelectTrigger>
+              <SelectValue>
+                {(value: string) => (value ? formatDateLabel(value) : "Select date")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {availableDates.map((date) => (
+                <SelectItem key={date} value={date}>
+                  {formatDateLabel(date)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      {filteredRows.length === 0 && (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>No attendance data for this range</EmptyTitle>
+            <EmptyDescription>Try a different day or week.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Card size="sm">
@@ -206,7 +320,13 @@ export function MessAttendanceClient({ rows, isConfigured }: MessAttendanceClien
         </Card>
       </div>
 
-      <SectionHeading>Daily trend across the month</SectionHeading>
+      <SectionHeading>
+        {granularity === "day"
+          ? "Daily trend"
+          : granularity === "week"
+            ? `Daily trend — week ${selectedWeek}`
+            : "Daily trend across the month"}
+      </SectionHeading>
       <Card>
         <CardHeader>
           <CardDescription>
