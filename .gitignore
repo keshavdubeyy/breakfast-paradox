@@ -44,3 +44,4 @@ __pycache__/
 # supabase
 supabase/.temp/
 
+data/export/

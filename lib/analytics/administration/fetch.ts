@@ -6,14 +6,16 @@ import type { ClassScheduleRow } from "./types"
 interface RawClassScheduleRow {
   id: string
   semester: string
-  course_no: string
+  course_no: string | null
   course_name: string
   faculty_names: string[] | null
   slot_code: string | null
   start_time: string
   end_time: string
   days: string[] | null
-  registered_count: number
+  registered_count: number | null
+  room: string | null
+  tag: string | null
 }
 
 function parseClassScheduleRow(raw: RawClassScheduleRow): ClassScheduleRow {
@@ -30,6 +32,8 @@ function parseClassScheduleRow(raw: RawClassScheduleRow): ClassScheduleRow {
     endTime: raw.end_time.slice(0, 5),
     days: raw.days ?? [],
     registeredCount: raw.registered_count,
+    room: raw.room,
+    tag: raw.tag,
   }
 }
 
@@ -55,7 +59,7 @@ export async function fetchClassSchedule(): Promise<ClassScheduleFetchResult> {
   const { data, error } = await supabase
     .from("class_schedule")
     .select(
-      "id, semester, course_no, course_name, faculty_names, slot_code, start_time, end_time, days, registered_count"
+      "id, semester, course_no, course_name, faculty_names, slot_code, start_time, end_time, days, registered_count, room, tag"
     )
     .order("semester", { ascending: true })
     .order("start_time", { ascending: true })

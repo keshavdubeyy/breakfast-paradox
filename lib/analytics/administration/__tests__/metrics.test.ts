@@ -5,7 +5,7 @@ import { computeAdministrationMetrics } from "../metrics"
 
 function makeRow(overrides: Partial<ClassScheduleRow> & { id: string }): ClassScheduleRow {
   return {
-    semester: "Monsoon 2026",
+    semester: "Spring 2026",
     courseNo: "XX0.000",
     courseName: "Sample Course",
     facultyNames: ["Someone"],
@@ -14,6 +14,8 @@ function makeRow(overrides: Partial<ClassScheduleRow> & { id: string }): ClassSc
     endTime: "09:55",
     days: ["Tue", "Fri"],
     registeredCount: 10,
+    room: "H101",
+    tag: null,
     ...overrides,
   }
 }
@@ -23,7 +25,7 @@ describe("computeAdministrationMetrics", () => {
     const metrics = computeAdministrationMetrics([])
     expect(metrics.semester).toBeNull()
     expect(metrics.totalCourses).toBe(0)
-    expect(metrics.totalRegisteredSeats).toBe(0)
+    expect(metrics.totalRegisteredSeats).toBeNull()
     expect(metrics.slots).toEqual([])
   })
 
@@ -75,5 +77,25 @@ describe("computeAdministrationMetrics", () => {
     const rows: ClassScheduleRow[] = [makeRow({ id: "1", semester: "Spring 2027" })]
     const metrics = computeAdministrationMetrics(rows)
     expect(metrics.semester).toBe("Spring 2027")
+  })
+
+  it("reports null total seats when no imported row has a registered count, never a fabricated zero", () => {
+    const rows: ClassScheduleRow[] = [
+      makeRow({ id: "1", registeredCount: null }),
+      makeRow({ id: "2", registeredCount: null, startTime: "10:05", endTime: "11:30" }),
+    ]
+    const metrics = computeAdministrationMetrics(rows)
+    expect(metrics.totalRegisteredSeats).toBeNull()
+    expect(metrics.slots.every((slot) => slot.totalRegisteredSeats === null)).toBe(true)
+  })
+
+  it("sums only the courses that have a registered count within a slot, leaving the rest out rather than treating them as zero", () => {
+    const rows: ClassScheduleRow[] = [
+      makeRow({ id: "1", registeredCount: 20 }),
+      makeRow({ id: "2", registeredCount: null }),
+    ]
+    const metrics = computeAdministrationMetrics(rows)
+    expect(metrics.slots).toHaveLength(1)
+    expect(metrics.slots[0].totalRegisteredSeats).toBe(20)
   })
 })

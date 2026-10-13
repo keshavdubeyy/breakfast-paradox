@@ -22,19 +22,31 @@ function groupIntoSlots(rows: ClassScheduleRow[]): ScheduleSlotSummary[] {
         totalRegisteredSeats: row.registeredCount,
       })
     } else {
-      slots[existingIndex].courses.push(row)
-      slots[existingIndex].totalRegisteredSeats += row.registeredCount
+      const slot = slots[existingIndex]
+      slot.courses.push(row)
+      if (row.registeredCount !== null) {
+        slot.totalRegisteredSeats = (slot.totalRegisteredSeats ?? 0) + row.registeredCount
+      }
     }
   }
 
   return slots
 }
 
+/** Sums registered counts across rows, or null when none of them have one
+ * (e.g. a timetable-only import with no registration-portal data yet) —
+ * never reported as a zero, which would misleadingly imply real data. */
+function sumRegisteredCounts(rows: ClassScheduleRow[]): number | null {
+  const withCounts = rows.filter((row) => row.registeredCount !== null)
+  if (withCounts.length === 0) return null
+  return withCounts.reduce((sum, row) => sum + (row.registeredCount ?? 0), 0)
+}
+
 export function computeAdministrationMetrics(rows: ClassScheduleRow[]): AdministrationMetrics {
   return {
     semester: rows[0]?.semester ?? null,
     totalCourses: rows.length,
-    totalRegisteredSeats: rows.reduce((sum, row) => sum + row.registeredCount, 0),
+    totalRegisteredSeats: sumRegisteredCounts(rows),
     slots: groupIntoSlots(rows),
   }
 }

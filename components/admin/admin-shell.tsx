@@ -8,6 +8,7 @@ import {
   Activity01Icon,
   Brain01Icon,
   CroissantIcon,
+  FlowCircleIcon,
   Layers01Icon,
   LayoutDashboardIcon,
   MountainSnowIcon,
@@ -56,9 +57,7 @@ function TabletAutoCollapse() {
 
   return null
 }
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { logout } from "@/app/admin/login/actions"
 
 const CONTRIBUTORS = ["Keshav Dubey", "Aasritha Kalluri", "Rahul Chand"]
 
@@ -72,6 +71,7 @@ const NAV_ITEMS = [
   { title: "Iceberg Summary", href: "/admin/iceberg", icon: MountainSnowIcon },
   { title: "Administration", href: "/admin/administration", icon: UniversityIcon },
   { title: "Mess Attendance", href: "/admin/mess-attendance", icon: CroissantIcon },
+  { title: "Causal Loops", href: "/admin/causal-loops", icon: FlowCircleIcon },
 ]
 
 interface AdminShellProps {
@@ -124,16 +124,6 @@ export function AdminShell({ children }: AdminShellProps) {
               ))}
             </CardContent>
           </Card>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void logout()
-            }}
-          >
-            Log out
-          </Button>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>

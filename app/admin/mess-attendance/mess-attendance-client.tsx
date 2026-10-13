@@ -42,6 +42,7 @@ import {
 import type { MenuDayRow } from "@/lib/analytics/mess-menu/types"
 import { DailyTrendChart } from "@/components/admin/mess-attendance/daily-trend-chart"
 import { MenuTimelineChart } from "@/components/admin/mess-attendance/menu-timeline-chart"
+import { MessOperationsNotes } from "@/components/admin/mess-attendance/mess-operations-notes"
 import { RushHourChart } from "@/components/admin/mess-attendance/rush-hour-chart"
 import { RateBarChart, type RateBarDatum } from "@/components/admin/mess-attendance/rate-bar-chart"
 
@@ -502,6 +503,8 @@ export function MessAttendanceClient({ rows, isConfigured, menuRows }: MessAtten
               </CardContent>
             </Card>
           </div>
+
+          <MessOperationsNotes dishLeaderboard={dishLeaderboard} />
         </>
       )}
     </div>
